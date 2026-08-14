@@ -1,0 +1,16 @@
+services:
+  orchestration:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    environment:
+      AGENTIC_RAG_URL: "${AGENTIC_RAG_URL:-}"
+      OPENAI_API_KEY: ""
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
