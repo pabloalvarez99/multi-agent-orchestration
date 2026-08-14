@@ -6,12 +6,13 @@ Project 3 in a five-system [AI Engineering portfolio](https://github.com/pabloal
 deterministic Research, Critic, and Writer specialists coordinated under explicit handoff and
 retry budgets, with Writer-only final output and typed degraded outcomes.
 
-> **M4 LIVE on the deterministic free path.** `run_task()`, `POST /v1/tasks`, and the JSON CLI
-> execute the bounded in-process fake team with an ordered timeline. A 12-task offline golden
-> scorecard measures routing contracts. No model call, remote specialist, or P2 client is
-> claimed.
+> **M5 and the v0.1.0 runtime surface are LIVE.** The fake team remains the default for the
+> library, API, CLI, browser console, and 12-task scorecard. Research can optionally cross the
+> public P2 HTTP boundary when `AGENTIC_RAG_URL` is explicitly configured. No model key is
+> required and the default path makes no network call. The public tag remains pending until
+> the release commit has green CI.
 
-The [target architecture](docs/architecture.md) and three accepted ADRs make the intended
+The [architecture](docs/architecture.md) and four accepted ADRs make the intended
 authority, Writer-only final rule, budgets, and degraded mode implemented through M2, plus
 the M3 timeline and M4 evaluation boundary.
 [SHIP.md](docs/SHIP.md) remains the shorter source of truth for what is runnable.
@@ -27,6 +28,10 @@ python -m venv .venv
 pip install -e ".[dev]"
 uvicorn mao.main:app --reload
 ```
+
+Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) for the accessible task console. It
+shows terminal status, Writer output, participants, handoff/retry accounting, request ID, and
+the ordered trace.
 
 ```bash
 curl http://127.0.0.1:8000/health
@@ -54,29 +59,71 @@ python -m mao.task --task "Compare hybrid vs dense retrieval"
 python -m mao.evals.run --pretty
 ```
 
+## Optional P2 Research
+
+The remote specialist is opt-in. An empty setting never changes the fake default:
+
+```bash
+export AGENTIC_RAG_URL="http://127.0.0.1:8001"
+curl -s -X POST http://127.0.0.1:8000/v1/tasks \
+  -H "content-type: application/json" \
+  -d '{"task":"Compare hybrid and dense retrieval","research":"http"}'
+```
+
+P3 sends one bounded `POST /v1/research` with P2's fake retriever by default. Missing
+configuration is a typed `409 capability_missing`; timeout, transport, HTTP, or response
+contract failures terminate as `degraded`. The P2 trace is not copied into the final result.
+
+## Docker
+
+```bash
+docker compose up --build
+# UI: http://127.0.0.1:8000/  API: http://127.0.0.1:8000/docs
+```
+
+The image uses Python 3.12 slim and runs Uvicorn as an unprivileged user. This compose file
+operates P3 alone; it is not the portfolio-wide P5 topology.
+
 ## Verify
 
 ```bash
 ruff check .
+mypy src/mao
 pytest -q
+python -m mao.evals.run
 ```
+
+## LIVE surface
+
+| Capability | State |
+| --- | --- |
+| Fake Research → Critic → Writer workflow, budgets, Writer-only final | **LIVE** |
+| JSON API, CLI, accessible UI, request IDs, ordered trace | **LIVE** |
+| Optional P2 HTTP Research, fail-closed to `degraded` | **LIVE (opt-in)** |
+| 12 fake goldens + two no-network boundary cases, billed `$0` | **LIVE** |
+| Ruff + mypy + pytest + evals in empty-key CI | **LIVE** |
+| Non-root Docker image and standalone Compose | **LIVE** |
+| Hosted models, remote-process isolation, multi-agent quality uplift | **PLANNED / not claimed** |
+| Public `v0.1.0` GitHub tag and release | **PENDING green release SHA** |
 
 ## Portfolio series
 
-1. [production-rag](https://github.com/pabloalvarez99/production-rag) — hybrid RAG,
-   grounded citations, refusal, and offline evaluation (**live: v0.1.0**)
-2. [agentic-rag-research](https://github.com/pabloalvarez99/agentic-rag-research) — bounded
+1. [production-rag v0.1.0](https://github.com/pabloalvarez99/production-rag/releases/tag/v0.1.0) — hybrid RAG,
+   grounded citations, refusal, and offline evaluation (**LIVE**)
+2. [agentic-rag-research v0.1.0](https://github.com/pabloalvarez99/agentic-rag-research/releases/tag/v0.1.0) — bounded
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
-   (**v0.1.0 / M6 live**)
-3. **multi-agent-orchestration** — coordination and handoffs (**M4 live; release planned**)
+   (**LIVE**)
+3. **multi-agent-orchestration** — coordination, optional P2 Research, and trace UI
+   (**M5 LIVE; v0.1.0 release candidate**)
 4. [RepoMind](https://github.com/pabloalvarez99/repomind) — AST-aware code intelligence
    with grounded `path:line` answers (**M5 live; JSON CLI + 14-case fixture eval**)
 5. AI Platform — gateway and operations (**planned**)
 
 ## Next boundary
 
-M5 adds an optional P2 research boundary without changing the default fake path. A tagged
-release remains M6; neither is implied by the M4 API/evaluation surface.
+The remaining M6 action is the public `v0.1.0` tag and GitHub release on an exact green SHA.
+Remote specialist isolation, hosted model quality, and claims that agents beat a single model
+remain future work.
 
 ## Documentation map
 
@@ -85,6 +132,7 @@ release remains M6; neither is implied by the M4 API/evaluation surface.
 - [ADR-0001](docs/adr/0001-specialist-roles.md) — narrow specialist authority.
 - [ADR-0002](docs/adr/0002-writer-only-final.md) — Writer is the sole final speaker.
 - [ADR-0003](docs/adr/0003-degraded-mode.md) — explicit evidence-preserving degradation.
+- [ADR-0004](docs/adr/0004-optional-p2-boundary.md) — optional P2 boundary that fails closed.
 - [SHIP](docs/SHIP.md) — LIVE/PLANNED truth and release gate.
 - [Portfolio](docs/PORTFOLIO.md) — P1 → P5 maturity ladder.
 - [Golden task schema](data/eval/README.md) — curation, coverage, metrics, and limits.

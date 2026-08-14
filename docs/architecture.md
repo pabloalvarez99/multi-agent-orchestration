@@ -1,11 +1,12 @@
 # Architecture — bounded specialist coordination
 
-Status: **P3-M4 LIVE on the deterministic free path; M5–M6 remain planned.** Integrated `main`
+Status: **P3-M5 LIVE; M6 public release pending.** Integrated `main`
 contains immutable message/result models, deterministic Research/Critic/Writer specialists,
 an in-memory bus, explicit transition policy, global handoff and Critic-retry budgets,
 Writer-only final enforcement, typed degraded/budget-exhausted results, an ordered JSON-safe
-timeline, `POST /v1/tasks`, a JSON CLI, and a 12-task offline scorecard. There is no P2 client,
-remote specialist, hosted model, or release.
+timeline, `POST /v1/tasks`, a JSON CLI, trace UI, a 12-task offline scorecard, two
+configuration-boundary cases, an optional P2 HTTP Research agent, request IDs, and a non-root
+container. There is no hosted model default, remote-process isolation, or public release yet.
 
 The system exists to answer one question: how can several specialists cooperate without
 turning role prompts into an unbounded, unauditable conversation?
@@ -14,16 +15,19 @@ turning role prompts into an unbounded, unauditable conversation?
 
 ```mermaid
 flowchart LR
-    C[Python / CLI / POST v1 tasks] --> O[run_task / Orchestrator]
-    O --> R[FakeResearchAgent]
-    R --> K[FakeCriticAgent]
+    C[Python / CLI / API / browser UI] --> O[run_task / Orchestrator]
+    O --> R{Research selection}
+    R --> F[FakeResearchAgent default]
+    R -. explicit URL .-> P2[P2 research API]
+    F --> K[FakeCriticAgent]
+    P2 --> K
     K -->|bounded reject| R
     K -->|accept| W[FakeWriterAgent]
     W --> X[TaskResult]
     H[Health caller] --> G[GET /health]
 ```
 
-All three task surfaces project the same `TaskResult`; `GET /health` proves process
+All four task surfaces project the same `TaskResult`; `GET /health` proves process
 availability and does not invoke the team.
 
 ## Runtime topology
@@ -36,7 +40,7 @@ flowchart LR
     C -->|reject; retry budget left| R
     C -->|accept| W[Writer specialist\nsole final speaker]
     W --> X[TaskResult\nstatus + answer + timeline]
-    R -. optional later .-> P2[P2 research API]
+    R -. opt-in HTTP .-> P2[P2 research API]
     O --> T[(append-only timeline)]
     R --> T
     C --> T
@@ -74,8 +78,8 @@ planned rather than being backfilled into a LIVE claim:
 | `content` | Bounded memo for the addressed specialist. | **LIVE** |
 | `attempt` | Research/critique retry number. | **LIVE** |
 | `TaskBudget` | Global handoff and research-retry ceilings supplied to the run. | **LIVE** |
-| `context_refs` | Evidence pointers rather than copied hidden state. | **PLANNED** |
-| `correlation_id` | Joins future timeline/API records. | **PLANNED** |
+| `trace_context` | Small JSON-safe dependency pointer; never a copied nested trace. | **LIVE** |
+| `X-Request-ID` | Correlates every HTTP response and rendered result. | **LIVE (transport)** |
 
 Models reject unknown fields, and policy rejects invalid sender/recipient transitions. A remote
 specialist must implement the same contract as the deterministic fake; transport choice must
@@ -141,10 +145,11 @@ M3 records an immutable ordered tuple of JSON-safe events. Each event has a cont
 `sequence`, closed-set `event`, closed-set `actor`, and bounded JSON payload. The event set is
 `task_started`, `handoff`, `agent_output`, `decision`, `specialist_error`, and `stop`.
 
-The trace omits the full task text and credentials. It records provider `fake` and billed cost
-`0.0` at task start, every dispatch, routing/retry/stop decisions, specialist error type, and
-the final status/accounting. Sequence numbers, not wall-clock timestamps, establish
-deterministic order. A correlation id and external log transport remain future concerns.
+The trace omits the full task text and credentials. It records the selected Research provider
+and billed cost `0.0` at task start, every dispatch, routing/retry/stop decision, specialist
+error type, and final accounting. HTTP Research adds only dependency name, host, P2 status,
+steps used, and P2 request ID to its output event—not P2's raw trace. Sequence numbers, not
+wall-clock timestamps, establish deterministic order. External log transport remains future.
 
 ## Evaluation boundary
 
@@ -160,12 +165,19 @@ specialist diversity, or model collaboration gains. Any future claim that multip
 outperform one agent needs paired tasks, named providers, cost/step accounting, and
 uncertainty.
 
+The M5 boundary slice adds two configuration cases: fake selection remains local and an HTTP
+selection without a URL produces `capability_missing`. Both report zero network calls. This
+proves opt-in behavior only; it does not score P2 answer quality.
+
 ## Optional P2 boundary
 
-P3-M5 may let Research call P2 through an explicit URL. That integration is optional and
-must fail closed when requested but unavailable. P3 consumes P2's typed result and trace
-references; it does not copy P2's planner or P1's retrieval stack. The default CI path remains
-local and credential-free.
+P3-M5 lets Research call P2 through an explicit absolute URL. The factory always returns
+`FakeResearchAgent` unless the caller selects `research="http"`; missing configuration is a
+typed API 4xx. One bounded HTTP request posts the task to `/v1/research` with
+`retriever="fake"` by default. Transport, timeout, status, JSON, or missing-report failures
+raise `AgentError`, which the orchestrator turns into `degraded` without invoking Writer.
+P3 maps the report and citations into its existing Critic handoff; it does not copy P2's
+planner, raw trace, or P1's retrieval stack. See [ADR-0004](adr/0004-optional-p2-boundary.md).
 
 ## Milestones
 
@@ -176,8 +188,8 @@ local and credential-free.
 | M2 | Orchestrator, transition policy, handoff/retry budgets, Writer-only final, degraded result | **LIVE as a library** |
 | M3 | Deterministic multi-agent timeline | **LIVE** |
 | M4 | `POST /v1/tasks`, JSON CLI, 12 offline goldens and behavioral scorecard | **LIVE** |
-| M5 | Optional P2 HTTP research boundary | **PLANNED** |
-| M6 | Ship polish and v0.1.0 release | **PLANNED** |
+| M5 | Optional P2 HTTP Research boundary | **LIVE (opt-in)** |
+| M6 | UI, strict CI, container, docs, and v0.1.0 release | **PARTIAL — public tag/release pending** |
 
 The [SHIP page](SHIP.md) is the operational truth if code lands while this target design is
 being implemented.

@@ -1,8 +1,11 @@
 # Golden orchestration tasks
 
 `tasks.jsonl` contains 12 deterministic scenarios for the credential-free specialist team.
+`research_boundaries.jsonl` adds two configuration-only cases for the optional P2 boundary.
 The evaluation runner executes the same `run_task()` path used by the API and CLI; it makes no
-network or provider call and reports `provider="fake"` with `billed_usd=0.0`.
+network or provider call and reports `provider="fake"` with `billed_usd=0.0`. Boundary cases
+construct specialists but never call `handle`, and report `network_calls=0`: fake remains
+local, while HTTP without a URL yields `capability_missing`.
 
 Run it from the repository root:
 

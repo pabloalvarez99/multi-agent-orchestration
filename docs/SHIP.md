@@ -1,9 +1,10 @@
 # Ship truth
 
-**Status: P3-M4 LIVE on the deterministic free path.** The repository can be cloned,
-installed, tested, and run without a key. Library, `POST /v1/tasks`, and JSON CLI execute the
-same bounded fake specialists and return a deterministic timeline. The 12-task offline
-scorecard needs no network. No model call, remote specialist, or P2 client exists on `main`.
+**Status: P3-M5 and the v0.1.0 runtime surface are LIVE; public release pending.** The
+repository can be cloned, tested, and run without a key. The fake team remains the default
+for library, API, CLI, UI, and 12-task scorecard. An explicitly selected HTTP Research agent
+can call P2 when `AGENTIC_RAG_URL` is configured and fails closed otherwise. The public tag is
+not claimed until the release SHA passes CI.
 
 ## Try the free path
 
@@ -13,6 +14,7 @@ python -m pip install -e ".[dev]"
 python -m pytest -q
 python -m uvicorn mao.main:app --port 8000
 curl http://127.0.0.1:8000/health
+# browser console: http://127.0.0.1:8000/
 ```
 
 ## LIVE table
@@ -22,15 +24,18 @@ curl http://127.0.0.1:8000/health
 | Python package and FastAPI process | **LIVE** | package import and app startup |
 | `GET /health` | **LIVE** | route and offline test |
 | `POST /v1/tasks` and JSON CLI | **LIVE** | response-shape, OpenAPI, budget, and CLI tests |
-| CI with `OPENAI_API_KEY` empty | **LIVE** | `.github/workflows/ci.yml` |
+| CI with OpenAI and P2 URL settings empty | **LIVE** | ruff, mypy, pytest, and evals workflow |
 | Typed handoff protocol and fake specialists | **LIVE** | model and fake-agent tests |
 | Orchestrator and global handoff/retry budgets | **LIVE (library)** | happy, retry, and exhaustion tests |
 | Writer-only final enforcement | **LIVE** | type + policy violation test; ADR-0002 |
 | Degraded specialist-failure outcomes | **LIVE** | crashing-Critic and impersonation tests; ADR-0003 |
 | Ordered JSON-safe multi-agent timeline | **LIVE** | completeness, ordering, privacy, and budget-stop tests |
 | 12-task golden evaluation | **LIVE** | three slices; [schema and limits](../data/eval/README.md) |
-| Optional P2 integration | **PLANNED** | no outbound research client |
-| Tagged release | **PLANNED** | no release claimed |
+| HTTP-absent evaluation slice | **LIVE** | two configuration cases, zero network calls |
+| Optional P2 integration | **LIVE (opt-in)** | mocked success/error/timeout tests; ADR-0004 |
+| Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |
+| Non-root Docker + standalone Compose | **LIVE** | local build and container smoke |
+| Tagged release | **PENDING** | tag only after the exact release SHA is green |
 
 ## What CI proves today
 
@@ -42,22 +47,21 @@ curl http://127.0.0.1:8000/health
 - API and CLI project the canonical result shape;
 - traces are ordered, JSON-safe, and omit full task content;
 - all 12 committed golden tasks meet their routing/accounting expectations;
-- lint and unit tests run on Python 3.12; and
+- ruff, strict mypy, unit tests, and both eval slices run on Python 3.12; and
 - the current free path does not need an OpenAI key.
 
-It does not prove answer quality, remote-process isolation, P2 integration, or multi-model
-collaboration because those capabilities are not integrated.
+It does not prove answer quality, remote-process isolation, live P2 availability, or
+multi-model collaboration. HTTP tests prove the boundary contract, not quality uplift.
 
-## Non-goals at M4
+## Non-goals for v0.1.0
 
 - No claim that several agents outperform one.
-- No model calls, shared memory, arbitrary tools, P2/P1 dependency, or hosted demo.
-- No remote-agent isolation, P2/P1 dependency, hosted quality score, or cost comparison.
+- No hosted model default, shared memory, arbitrary tools, or hosted demo.
+- No remote-agent isolation, hosted quality score, or cost comparison.
 - No silent promotion of target architecture to LIVE documentation.
 
 ## Release gate
 
-P3 can be called v0.1.0 only after the optional M5 P2 boundary is either implemented and
-tested or explicitly cut from the release; all 12 goldens pass on the release commit; the
-LIVE table points to merged tests; CI is green on the exact tag; and fake-provider metrics
-are labelled as contract evidence.
+The implementation gates are complete. The remaining release gate is mechanical: prepare a
+release commit, prove its exact SHA green in CI, create `v0.1.0` at that SHA, and publish notes
+that separate LIVE capability from PLANNED claims.
