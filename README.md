@@ -69,7 +69,8 @@ pytest -q
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
    (**M5 live; release planned**)
 3. **multi-agent-orchestration** — coordination and handoffs (**M4 live; release planned**)
-4. RepoMind — code intelligence (**planned; no public implementation**)
+4. [RepoMind](https://github.com/pabloalvarez99/repomind) — AST-aware code intelligence
+   with grounded `path:line` answers (**M3 live; CLI/evals planned**)
 5. AI Platform — gateway and operations (**planned**)
 
 ## Next boundary
