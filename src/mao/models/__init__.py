@@ -7,5 +7,14 @@ from mao.models.messages import (
     HandoffMessage,
     TaskBudget,
 )
+from mao.models.task import TaskResult, TaskStatus
 
-__all__ = ["AgentMessage", "AgentName", "FinalAnswer", "HandoffMessage", "TaskBudget"]
+__all__ = [
+    "AgentMessage",
+    "AgentName",
+    "FinalAnswer",
+    "HandoffMessage",
+    "TaskBudget",
+    "TaskResult",
+    "TaskStatus",
+]
