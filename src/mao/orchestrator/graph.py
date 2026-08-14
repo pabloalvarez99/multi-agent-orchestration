@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 from pydantic import JsonValue
 
-from mao.agents import FakeCriticAgent, FakeResearchAgent, FakeWriterAgent
+from mao.agents import Agent, FakeCriticAgent, FakeResearchAgent, FakeWriterAgent
 from mao.models import (
     AgentName,
     FinalAnswer,
@@ -29,10 +29,18 @@ class Orchestrator:
         *,
         bus: InMemoryBus | None = None,
         policy: OrchestrationPolicy | None = None,
+        research_agent: Agent | None = None,
     ) -> None:
         """Build the default fake team or accept an injected test team."""
+        if bus is not None and research_agent is not None:
+            raise ValueError("bus and research_agent cannot both be supplied")
         self._bus = bus or InMemoryBus(
-            [FakeResearchAgent(), FakeCriticAgent(), FakeWriterAgent()]
+            [research_agent or FakeResearchAgent(), FakeCriticAgent(), FakeWriterAgent()]
+        )
+        self._research_provider = (
+            "custom"
+            if bus is not None
+            else str(getattr(research_agent or FakeResearchAgent(), "provider", "custom"))
         )
         self._policy = policy or OrchestrationPolicy()
 
@@ -56,7 +64,7 @@ class Orchestrator:
             {
                 "max_handoffs": limits.max_handoffs,
                 "max_research_retries": limits.max_research_retries,
-                "provider": "fake",
+                "provider": self._research_provider,
                 "billed_usd": 0.0,
             },
         )
@@ -122,7 +130,11 @@ class Orchestrator:
                     trace,
                     "agent_output",
                     dispatched,
-                    {"kind": "handoff", "recipient": output.recipient.value},
+                    {
+                        "kind": "handoff",
+                        "recipient": output.recipient.value,
+                        **output.trace_context,
+                    },
                 )
                 previous_retries = retries
                 retries = self._policy.next_retry_count(
@@ -151,7 +163,13 @@ class Orchestrator:
                     trace,
                     "specialist_error",
                     current.recipient,
-                    {"error_type": type(error).__name__},
+                    {
+                        "error_type": getattr(
+                            error,
+                            "error_type",
+                            type(error).__name__,
+                        )
+                    },
                 )
                 self._record(
                     trace,
@@ -225,9 +243,14 @@ class Orchestrator:
         )
 
 
-def run_task(task: str, *, budget: TaskBudget | None = None) -> TaskResult:
+def run_task(
+    task: str,
+    *,
+    budget: TaskBudget | None = None,
+    research_agent: Agent | None = None,
+) -> TaskResult:
     """Run a task with the default credential-free team."""
-    return Orchestrator().run(task, budget=budget)
+    return Orchestrator(research_agent=research_agent).run(task, budget=budget)
 
 
 __all__ = ["Orchestrator", "run_task"]

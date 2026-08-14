@@ -1,5 +1,7 @@
 """Credential-free task route and OpenAPI contract tests."""
 
+import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 from mao.main import app
@@ -41,3 +43,35 @@ def test_openapi_exposes_only_max_handoffs_inside_budget() -> None:
     schema = client.get("/openapi.json").json()
     budget = schema["components"]["schemas"]["TaskBudgetRequest"]
     assert set(budget["properties"]) == {"max_handoffs"}
+
+
+def test_http_choice_without_url_is_a_typed_client_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("AGENTIC_RAG_URL", raising=False)
+
+    response = client.post(
+        "/v1/tasks",
+        json={"task": "Compare systems", "research": "http"},
+    )
+
+    assert response.status_code == 409
+    body = response.json()
+    assert body["error_type"] == "capability_missing"
+    assert body["request_id"] == response.headers["x-request-id"]
+
+
+def test_default_request_never_constructs_an_http_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AGENTIC_RAG_URL", "https://p2.example.test")
+
+    def forbidden_client(*args: object, **kwargs: object) -> httpx.Client:
+        raise AssertionError("the default fake path opened a socket client")
+
+    monkeypatch.setattr(httpx, "Client", forbidden_client)
+
+    response = client.post("/v1/tasks", json={"task": "Compare systems"})
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "done"

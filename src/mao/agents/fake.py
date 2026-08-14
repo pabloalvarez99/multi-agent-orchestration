@@ -34,6 +34,7 @@ class FakeResearchAgent:
     """Produce a deterministic evidence memo for Critic."""
 
     name = AgentName.RESEARCH
+    provider = "fake"
 
     def handle(self, message: HandoffMessage) -> AgentMessage:
         """Turn the task and any critique into a small evidence memo."""

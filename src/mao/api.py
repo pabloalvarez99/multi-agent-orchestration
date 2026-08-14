@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from mao.agents import ResearchChoice, build_research_agent
 from mao.models import AgentName, TaskBudget, TaskResult, TaskStatus, TraceEvent
+from mao.orchestrator import run_task
 
 
 class TaskBudgetRequest(BaseModel):
@@ -28,6 +31,7 @@ class TaskRequest(BaseModel):
 
     task: str = Field(min_length=1, max_length=8_000)
     budget: TaskBudgetRequest = Field(default_factory=TaskBudgetRequest)
+    research: ResearchChoice = ResearchChoice.FAKE
 
 
 class TaskResponse(BaseModel):
@@ -51,5 +55,31 @@ class TaskResponse(BaseModel):
         )
 
 
-TaskRunner = Callable[[str, TaskBudget], TaskResult]
+class ErrorType(StrEnum):
+    """Stable failure categories returned by the API boundary."""
+
+    CAPABILITY_MISSING = "capability_missing"
+
+
+class ErrorResponse(BaseModel):
+    """Public typed error envelope."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    error: str
+    error_type: ErrorType
+    request_id: str
+
+
+def execute_task_request(request: TaskRequest) -> TaskResult:
+    """Resolve the explicitly selected Research specialist and run the task."""
+    research_agent = build_research_agent(request.research)
+    return run_task(
+        request.task,
+        budget=request.budget.to_domain(),
+        research_agent=research_agent,
+    )
+
+
+TaskRunner = Callable[[TaskRequest], TaskResult]
 """Dependency-injection seam used by the FastAPI application."""

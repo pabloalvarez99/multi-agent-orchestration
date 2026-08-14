@@ -8,8 +8,8 @@ from collections.abc import Sequence
 
 from pydantic import ValidationError
 
-from mao.api import TaskBudgetRequest, TaskRequest, TaskResponse
-from mao.orchestrator import run_task
+from mao.agents import ResearchCapabilityMissing, ResearchChoice
+from mao.api import TaskBudgetRequest, TaskRequest, TaskResponse, execute_task_request
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -17,6 +17,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task", required=True, help="Task for the specialist team.")
     parser.add_argument("--max-handoffs", type=int, default=8, help="Global dispatch budget.")
+    parser.add_argument(
+        "--research",
+        choices=[choice.value for choice in ResearchChoice],
+        default=ResearchChoice.FAKE.value,
+        help="Research specialist; http requires AGENTIC_RAG_URL.",
+    )
     return parser
 
 
@@ -27,11 +33,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         request = TaskRequest(
             task=arguments.task,
             budget=TaskBudgetRequest(max_handoffs=arguments.max_handoffs),
+            research=ResearchChoice(arguments.research),
         )
+        result = execute_task_request(request)
     except ValidationError as error:
         print(json.dumps({"error": "invalid_request", "details": error.error_count()}))
         return 2
-    result = run_task(request.task, budget=request.budget.to_domain())
+    except ResearchCapabilityMissing as error:
+        print(json.dumps({"error": str(error), "error_type": error.error_type}))
+        return 3
     print(TaskResponse.from_result(result).model_dump_json())
     return 0 if result.status.value == "done" else 1
 

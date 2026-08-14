@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 
 class AgentName(StrEnum):
@@ -42,6 +42,7 @@ class HandoffMessage(BaseModel):
     task: str = Field(min_length=1, max_length=8_000)
     content: str = Field(min_length=1, max_length=16_000)
     attempt: int = Field(default=0, ge=0, le=2)
+    trace_context: dict[str, JsonValue] = Field(default_factory=dict)
 
 
 class FinalAnswer(BaseModel):
