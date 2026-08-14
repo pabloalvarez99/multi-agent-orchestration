@@ -6,7 +6,7 @@
 | # | Project | Maturity question | State |
 | --- | --- | --- | --- |
 | P1 | [production-rag](https://github.com/pabloalvarez99/production-rag) | Can retrieval answer with grounded citations, refuse, and measure itself offline? | **v0.1.0 LIVE** |
-| P2 | [agentic-rag-research](https://github.com/pabloalvarez99/agentic-rag-research) | Can one agent use retrieval under budgets with explicit stops and a trace? | **M5 LIVE; release planned** |
+| P2 | [agentic-rag-research](https://github.com/pabloalvarez99/agentic-rag-research) | Can one agent use retrieval under budgets with explicit stops and a trace? | **v0.1.0 / M6 LIVE** |
 | **P3** | **multi-agent-orchestration** | Can specialists hand work off under shared policy, isolation, and budgets? | **M4 LIVE; release planned** |
 | P4 | [RepoMind](https://github.com/pabloalvarez99/repomind) | Can code answers cite stable `path:line` evidence? | **M3 LIVE; CLI/evals planned** |
 | P5 | AI Platform | Can the services be operated behind auth, limits, and aggregate health? | **PLANNED** |
