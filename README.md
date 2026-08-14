@@ -14,7 +14,7 @@ Project 3 in a five-system [AI Engineering portfolio](https://github.com/pabloal
 deterministic Research, Critic, and Writer specialists coordinated under explicit handoff and
 retry budgets, with Writer-only final output and typed degraded outcomes.
 
-> **v0.2.0 LIVE.** The fake team remains the default for the
+> **v0.3.0 LIVE.** The fake team remains the default for the
 > library, API, CLI, browser console, and 18-case offline scorecard. Research can optionally cross the
 > public P2 HTTP boundary when `AGENTIC_RAG_URL` is explicitly configured. No model key is
 > required and the default path makes no network call.
@@ -55,7 +55,14 @@ Each API/UI task is addressable during its process lifetime through
 `GET /v1/runs/{id}` and `GET /v1/runs/{id}/trace`. Trace schema 1 uses logical
 `ts_offset_ms` values so same task + seed produces an exactly comparable event sequence; see
 [ADR-0005](docs/adr/0005-versioned-process-local-traces.md). This is a bounded 128-run FIFO,
-not durable storage.
+not durable storage. After recycle, use **Load trace JSON** in the console or:
+
+```bash
+python -m mao.replay path/to/export.json   # exit 0 valid schema-1, 2 invalid
+```
+
+Client-side file replay is the durable path this week — not Vercel KV/Postgres
+([ADR-0006](docs/adr/0006-client-side-file-replay.md)).
 
 ## Run the free path
 
@@ -143,6 +150,7 @@ python -m mao.evals.run
 | Fake Research → Critic → Writer workflow, budgets, Writer-only final | **LIVE** |
 | JSON API, CLI, accessible UI, request IDs, ordered trace | **LIVE** |
 | Versioned trace replay + bounded last-128 run lookup | **LIVE (process-local)** |
+| Offline file replay (UI + `python -m mao.replay`) | **LIVE (client-side)** |
 | Optional P2 HTTP Research, fail-closed to `degraded` | **LIVE (opt-in)** |
 | 12 routing goldens + 2 boundary + 4 chaos cases, billed `$0` | **LIVE** |
 | Ruff + mypy + pytest + evals in empty-key CI | **LIVE** |
@@ -150,6 +158,7 @@ python -m mao.evals.run
 | Hosted credential-free console and API | **LIVE** — [`pax-orchestration.vercel.app`](https://pax-orchestration.vercel.app) |
 | Hosted models, remote-process isolation, multi-agent quality uplift | **PLANNED / not claimed** |
 | Public [`v0.2.0`](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.2.0) GitHub release | **LIVE** |
+| Public [`v0.3.0`](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.3.0) GitHub release | **LIVE** (file replay) |
 
 ## Portfolio series
 
@@ -158,7 +167,7 @@ python -m mao.evals.run
 2. [agentic-rag-research v0.1.0](https://github.com/pabloalvarez99/agentic-rag-research/releases/tag/v0.1.0) — bounded
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
    (**LIVE**)
-3. [**multi-agent-orchestration v0.2.0**](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.2.0) — coordination, versioned replay, chaos goldens, and trace UI (**LIVE**)
+3. [**multi-agent-orchestration v0.3.0**](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.3.0) — coordination, offline file replay, chaos goldens, and trace UI (**LIVE**)
 4. [RepoMind](https://github.com/pabloalvarez99/repomind) — AST-aware code intelligence
    with grounded `path:line` answers (**M5 live; JSON CLI + 14-case fixture eval**)
 5. AI Platform — gateway and operations (**planned**)
@@ -166,7 +175,7 @@ python -m mao.evals.run
 ## Next boundary
 
 Remote specialist isolation, hosted model quality, and claims that agents beat a single model
-remain future work after v0.2.0.
+remain future work after v0.3.0.
 
 ## Documentation map
 
@@ -177,6 +186,7 @@ remain future work after v0.2.0.
 - [ADR-0003](docs/adr/0003-degraded-mode.md) — explicit evidence-preserving degradation.
 - [ADR-0004](docs/adr/0004-optional-p2-boundary.md) — optional P2 boundary that fails closed.
 - [ADR-0005](docs/adr/0005-versioned-process-local-traces.md) — replay schema, logical offsets, and bounded retention.
+- [ADR-0006](docs/adr/0006-client-side-file-replay.md) — offline file replay instead of KV/Postgres this week.
 - [SHIP](docs/SHIP.md) — LIVE/PLANNED truth and release gate.
 - [Case study](docs/CASESTUDY.md) — interview-ready policy decisions and trade-offs.
 - [Portfolio](docs/PORTFOLIO.md) — P1 → P5 maturity ladder.

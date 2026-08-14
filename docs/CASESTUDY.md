@@ -127,7 +127,8 @@ or an intermediate memo as Writer output.
 - The Replay panel and all four committed captures are generated twice with byte-identical
   manifests; trace lookups declare schema 1 and typed 404 expiry.
 - Live P2 availability is opt-in. Remote-process isolation, hosted-model quality, and a claim
-  that specialists outperform a single model remain outside v0.2.0.
+  that specialists outperform a single model remain outside v0.3.0. File replay is
+  client-side durability (ADR-0006), not multi-instance server storage.
 
 ## Interview version
 

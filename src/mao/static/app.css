@@ -57,6 +57,12 @@ button:hover { background: #ddff98; transform: translateY(-1px); }
 .trace summary { cursor: pointer; font-weight: 800; }
 .trace summary span { margin-left: .5rem; color: var(--muted); font-weight: 400; }
 .download-link { display: inline-block; padding: .45rem .65rem; border: 1px solid var(--line); font: 750 .75rem ui-monospace, monospace; text-transform: uppercase; }
+.file-replay-loader { margin-top: 1.4rem; border-top: 4px solid var(--lime); }
+.file-replay-loader .lede-small { margin: .6rem 0 0; color: var(--muted); max-width: 46rem; }
+.file-replay-loader input[type="file"] { margin-top: .35rem; padding: .7rem; border-style: dashed; }
+.file-replay-root { margin-top: 1rem; }
+.file-replay-root .file-replay-panel { margin-bottom: .8rem; }
+.file-replay-error { border-left: 4px solid var(--red); }
 .trace ol { margin: 1rem 0 0; padding: 0; list-style: none; }
 .trace li { display: grid; grid-template-columns: 2.3rem 1fr; gap: .8rem; padding-bottom: .8rem; }
 .sequence { padding-top: .7rem; color: var(--orange); font: .75rem ui-monospace, monospace; }

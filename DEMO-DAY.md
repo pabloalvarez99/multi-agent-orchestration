@@ -1,67 +1,69 @@
-# P3 demo day — cold URL or clone to degraded in 20 minutes
+# P3 demo day — run, download, forget, reload (15 minutes)
 
-This script demonstrates policy and failure isolation with deterministic fake specialists.
-It spends `$0`, needs no API key, and does not evaluate model quality.
+This script demonstrates policy isolation and **client-side durability** with deterministic
+fake specialists. It spends `$0`, needs no API key, and does not evaluate model quality.
 
-## 0–3 minutes — prove the public edge
+## 0–3 minutes — public edge + warm run
 
-Open <https://pax-orchestration.vercel.app>. A cold serverless instance may take a few
-seconds. Submit the prefilled task and point out the Writer-owned result, bounded counters,
-logical event offsets, and Replay panel.
+Open <https://pax-orchestration.vercel.app>. Submit the prefilled task. Point out Writer-owned
+result, bounded counters, logical offsets, and the Replay panel.
 
 ```bash
-curl https://pax-orchestration.vercel.app/health
-curl -X POST https://pax-orchestration.vercel.app/v1/tasks \
+curl -sS https://pax-orchestration.vercel.app/health
+curl -sS -X POST https://pax-orchestration.vercel.app/v1/tasks \
   -H "content-type: application/json" \
   -H "x-request-id: demo-day-run" \
-  -d '{"task":"Audit retrieval risk","seed":41,"budget":{"max_handoffs":8}}'
-curl https://pax-orchestration.vercel.app/v1/runs/demo-day-run/trace
+  -d '{"task":"Audit retrieval risk","seed":41,"budget":{"max_handoffs":8}}' \
+  | tee /tmp/demo-day-task.json
+curl -sS -D - -o /tmp/demo-day-trace.json \
+  https://pax-orchestration.vercel.app/v1/runs/demo-day-run/trace
 ```
 
-If the last lookup lands on another serverless instance, explain the visible limitation:
-retention is process-local, not a database. The POST response still contains the full trace.
+While the instance is warm, also click **Download export JSON** in the UI (or save
+`/v1/runs/{id}/trace`). That file is the durable artifact.
 
-## 3–9 minutes — clone and verify the free path
+## 3–7 minutes — prove the hole, then recover offline
+
+Refresh until `GET /v1/runs/demo-day-run` returns `404` (recycle, another isolate, or FIFO
+eviction — all honest). Do **not** claim the server still has the run.
+
+```bash
+curl -sS -i https://pax-orchestration.vercel.app/v1/runs/demo-day-run
+# expect 404 run_not_found after the process forgot
+
+python -m mao.replay /tmp/demo-day-trace.json
+# exit 0 · same actor sequence as the warm response
+```
+
+On the hosted page, use **Load trace JSON** and choose the downloaded file. The Replay panel
+and ordered timeline render with **no server round-trip after load**. Timeline actors match
+the warm GET.
+
+## 7–11 minutes — clone free path + concurrent isolation
 
 ```bash
 git clone https://github.com/pabloalvarez99/multi-agent-orchestration.git
 cd multi-agent-orchestration
 python -m venv .venv
 # Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
 python -m pip install -e ".[dev]"
-ruff check .
-mypy src/mao
-pytest -q
+pytest -q tests/test_replay.py tests/test_concurrency.py tests/test_http_p2.py
 ```
 
-## 9–14 minutes — inspect deterministic replay
+Show: two concurrent fake tasks do not swap Writer text; recycle-equivalent
+(`RunStore.clear`) still allows file replay; HTTP Research unset → `capability_missing`,
+5xx → degraded without Writer.
 
-```bash
-python -m mao.task --task "Audit retrieval risk" --seed 41 --max-handoffs 8
-python -m mao.task --task "Audit retrieval risk" --seed 41 --max-handoffs 8
-```
-
-The event lists are identical: schema 1 uses logical `ts_offset_ms` rather than wall-clock
-timestamps. Runtime specialist timings remain separate debug values.
-
-## 14–18 minutes — force and explain degradation
+## 11–15 minutes — chaos scorecard + close
 
 ```bash
 python -m mao.evals.run --pretty
-pytest -q tests/evals tests/api/test_tasks.py
 ```
 
-In `chaos_results`, show:
+Chaos cases: Critic crash → non-empty `degraded`; two rejects → Writer still finishes;
+`max_handoffs` typed stop; Research cannot impersonate Writer.
 
-- `critic-crash-degrades`: non-empty `degraded` + `specialist_error`;
-- `critic-rejects-twice-writer-finishes`: two retries, seven handoffs, Writer final;
-- `global-budget-typed-stop`: `budget_exhausted` + `max_handoffs`;
-- `research-cannot-impersonate-writer`: `policy_violation`, no fake final promoted.
-
-## 18–20 minutes — close with the boundary
-
-Use the [authority matrix](docs/SHIP.md#authority-and-stop-matrix) and
-[ADR-0005](docs/adr/0005-versioned-process-local-traces.md). The interview claim is narrow:
-P3 makes coordination policy replayable and failures typed. Durable cross-instance audit
-storage, remote specialist isolation, and hosted-model quality are not claimed.
+Close with [ADR-0005](docs/adr/0005-versioned-process-local-traces.md) (process-local FIFO)
+and [ADR-0006](docs/adr/0006-client-side-file-replay.md) (file is the durable copy, not KV).
+Interview claim: coordination policy is replayable after the server forgets — without
+pretending Vercel is a database.

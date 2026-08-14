@@ -9,6 +9,7 @@ from mao.agents import (
     AgentError,
     FakeResearchAgent,
     HttpP2ResearchAgent,
+    ResearchCapabilityMissing,
     ResearchChoice,
     build_research_agent,
 )
@@ -121,6 +122,33 @@ def test_factory_keeps_fake_as_default_even_when_url_is_configured(
     monkeypatch.setenv("AGENTIC_RAG_URL", "https://p2.example.test")
     assert isinstance(build_research_agent(), FakeResearchAgent)
     assert isinstance(build_research_agent(ResearchChoice.FAKE), FakeResearchAgent)
+
+
+def test_http_research_unset_is_capability_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("AGENTIC_RAG_URL", raising=False)
+    with pytest.raises(ResearchCapabilityMissing) as raised:
+        build_research_agent(ResearchChoice.HTTP)
+    assert raised.value.error_type == "capability_missing"
+
+
+def test_http_5xx_fail_closed_without_writer() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, json={"error": "upstream_down"})
+
+    agent = HttpP2ResearchAgent(
+        "https://p2.example.test",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    result = run_task("Compare systems", research_agent=agent)
+    assert result.status is TaskStatus.DEGRADED
+    assert AgentName.WRITER not in result.agents_involved
+    assert any(
+        event.event == "specialist_error"
+        and event.payload.get("error_type") == "dependency_http_error"
+        for event in result.trace
+    )
 
 
 def test_factory_allows_caller_to_explicitly_select_p2_http_retrieval() -> None:
