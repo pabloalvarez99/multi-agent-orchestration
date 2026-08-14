@@ -23,6 +23,26 @@ The [architecture](docs/architecture.md) and four accepted ADRs make the intende
 authority, Writer-only final rule, budgets, and degraded mode implemented through M2, plus
 the M3 timeline and M4 evaluation boundary.
 [SHIP.md](docs/SHIP.md) remains the shorter source of truth for what is runnable.
+The [case study](docs/CASESTUDY.md) is the one-page engineering story behind the policy
+trade-offs.
+
+## See the orchestration
+
+![Completed Writer path with the ordered specialist trace](docs/assets/ui-done.png)
+
+*Deterministic fake specialists. Not a quality claim.* The capture shows the actual local UI:
+three handoffs, Writer-owned final output, 11 ordered events, and a normalized display-only
+request ID. Runtime request IDs remain unique.
+
+The bounded failure path and longer Critic retry timeline are preserved in
+[SHIP](docs/SHIP.md#generated-ui-evidence). Regenerate every committed PNG and its SHA-256
+manifest with:
+
+```bash
+pip install -e ".[docs]"
+playwright install chromium
+python scripts/capture_ui.py
+```
 
 ## Run the free path
 
@@ -139,6 +159,7 @@ remain future work after v0.1.0.
 - [ADR-0003](docs/adr/0003-degraded-mode.md) — explicit evidence-preserving degradation.
 - [ADR-0004](docs/adr/0004-optional-p2-boundary.md) — optional P2 boundary that fails closed.
 - [SHIP](docs/SHIP.md) — LIVE/PLANNED truth and release gate.
+- [Case study](docs/CASESTUDY.md) — interview-ready policy decisions and trade-offs.
 - [Portfolio](docs/PORTFOLIO.md) — P1 → P5 maturity ladder.
 - [Golden task schema](data/eval/README.md) — curation, coverage, metrics, and limits.
 

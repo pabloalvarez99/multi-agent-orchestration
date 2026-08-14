@@ -33,8 +33,34 @@ curl http://127.0.0.1:8000/health
 | HTTP-absent evaluation slice | **LIVE** | two configuration cases, zero network calls |
 | Optional P2 integration | **LIVE (opt-in)** | mocked success/error/timeout tests; ADR-0004 |
 | Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |
+| Generated UI captures | **LIVE** | Playwright script, pinned inputs, committed SHA-256 manifest |
 | Non-root Docker + standalone Compose | **LIVE** | local build and container smoke |
 | Tagged `v0.1.0` release | **LIVE** | public release targets the exact green release commit |
+
+## Generated UI evidence
+
+| Writer completes | Global budget stops |
+| --- | --- |
+| [![Done path with Writer output and ordered trace](assets/ui-done.png)](assets/ui-done.png) | [![Budget-exhausted path before Writer](assets/ui-budget.png)](assets/ui-budget.png) |
+
+### Bounded Critic retry
+
+[![Seventeen-event Research, Critic, Writer timeline with one retry and visible request ID](assets/ui-trace.png)](assets/ui-trace.png)
+
+*Deterministic fake specialists. Not a quality claim.* The script uses the real localhost app
+and fake form path. It pins viewport, locale, task text, and budgets, disables motion, and
+normalizes only the displayed request ID to `capture-fixed-request-id`; production request IDs
+remain unique. Two consecutive generation runs produced byte-identical PNGs recorded in
+[`ui-captures.sha256`](assets/ui-captures.sha256).
+
+```bash
+python -m pip install -e ".[docs]"
+playwright install chromium
+python scripts/capture_ui.py
+```
+
+The live P2 smoke is still opt-in and is not involved in these captures. No hosted demo is
+claimed.
 
 ## What CI proves today
 
