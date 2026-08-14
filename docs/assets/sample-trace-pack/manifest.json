@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "pack_kind": "mao-trace-pack",
+  "policy_id": "default-v0.3-characterization",
+  "policy_hash": "b8526d4fc898bd12d6974ad0d10c517a3b54bfce87169c319399378fb140302a",
+  "seed": 41,
+  "created_with": "1.0.0",
+  "pack_hash": "437f35dc13268b05f11752f3d3ac7acc2adf5e360fa8b32a8dfbb287104583db"
+}

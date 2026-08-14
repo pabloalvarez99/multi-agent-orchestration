@@ -1,0 +1,14 @@
+{
+  "n": 1000,
+  "seed": 20260814,
+  "workers": 8,
+  "swap_rate": 0.0,
+  "writer_only_violations": 0,
+  "swap_count": 0,
+  "degraded_rate": 0.0,
+  "budget_exhausted_rate": 0.085,
+  "done_rate": 0.915,
+  "label": "isolation/plumbing \u2014 not multi-agent quality",
+  "provider": "fake",
+  "billed_usd": 0.0
+}

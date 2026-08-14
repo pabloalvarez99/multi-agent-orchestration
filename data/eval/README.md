@@ -2,7 +2,8 @@
 
 `tasks.jsonl` contains 12 deterministic scenarios for the credential-free specialist team.
 `research_boundaries.jsonl` adds two configuration-only cases for the optional P2 boundary.
-`chaos.jsonl` adds four fault-injection contracts for isolation and typed stops.
+`chaos.jsonl` contains **≥40** fault-injection contracts with **easy / medium / hard** difficulty
+and family tags for isolation (not answer quality).
 The evaluation runner executes the same `run_task()` path used by the API and CLI; it makes no
 network or provider call and reports `provider="fake"` with `billed_usd=0.0`. Boundary cases
 construct specialists but never call `handle`, and report `network_calls=0`: fake remains
@@ -27,42 +28,33 @@ expectation failed, and `2` means the dataset could not be loaded or validated.
 
 ## Chaos coverage
 
-| Scenario | Required invariant |
+| Family | Intent |
 | --- | --- |
-| `specialist_crash` | HTTP/library result is `degraded`, non-empty, and `specialist_error`. |
-| `critic_reject_twice` | Both retries are counted and Writer still finishes on handoff 7. |
-| `max_handoffs` | Terminal status is `budget_exhausted` with typed `max_handoffs`. |
-| `writer_impersonation` | Research final text is rejected as `policy_violation`. |
+| `specialist_crash` | Research/Critic/Writer faults → non-empty `degraded` |
+| `writer_impersonation` | Non-Writer `FinalAnswer` → `policy_violation` |
+| `illegal_handoff` | Research→Writer edge blocked |
+| `critic_reject_loop` | Bounded rejects, retry ceiling |
+| `max_handoffs` | Global budget typed stop |
+| `writer_crash_after_accept` | No intermediate memo promotion |
+| `concurrent_isolation` | Distinct tokens do not swap under threads |
+| `policy_budget_matrix` | Loadable restrictive policy changes happy path |
+
+Difficulty predicates live in `assert_chaos_difficulty_predicates`: CI fails if all **new** rows
+are easy, or if medium/hard slices collapse into weak single-fault clones.
 
 These are deterministic fake faults. They evaluate control-plane behavior, not answer quality.
 
-The task wording is intentionally direct professional English. Retry cases retain the words
-`audit`, `validate`, or `verify` because those terms are part of the documented deterministic
-fake policy, not hidden labels added after observing a run.
+## Policy characterization
 
-## JSONL schema
-
-| Field | Meaning |
-| --- | --- |
-| `id` | Stable unique scenario id. |
-| `category` | `happy_path`, `critic_retry`, or `budget_stop`. |
-| `task` | Exact task submitted to the orchestrator. |
-| `max_handoffs` | Global dispatch ceiling for the case. |
-| `expected_status` | Expected `done` or `budget_exhausted` result. |
-| `expected_agents` | Ordered participants the run must involve. |
-| `expected_handoffs` | Exact handoff count. |
-| `expected_retries` | Exact Critic → Research retry count. |
-
-The loader rejects malformed records, unknown fields, duplicate ids, fewer than ten tasks,
-and missing required categories. Exact behavioral expectations are checked by the runner,
-not treated as dataset-integrity rules.
+Default policy file: `policies/default-v0.3-characterization.json`.
+Restrictive fixture: `policies/fixtures/forbid-research-to-writer.json`.
 
 ## Metrics and limits
 
 The JSON scorecard reports task pass rate, mean handoffs, retry-task rate, Writer completion
-rate, and terminal-status counts, plus per-task mismatches. These values measure routing,
-budget, ownership, and accounting conformance on fake specialists. They do not measure answer
-quality, factuality, specialist diversity, latency, or multi-model uplift.
+rate, and terminal-status counts, plus per-task mismatches. Isolation simulation metrics
+(`swap_rate`, `writer_only_violations`) are published under `docs/assets/isolation-sim.*` and
+are labeled **isolation/plumbing**, not quality.
 
 When editing a task, run both:
 

@@ -75,6 +75,13 @@ CAPTURE_SPECS: Final = (
         expected_status="Done",
         target=".file-replay-loader",
     ),
+    CaptureSpec(
+        filename="ui-policy.png",
+        task="POLICY_PAGE",
+        max_handoffs=8,
+        expected_status="Policy as data",
+        target=".policy-panel",
+    ),
 )
 
 
@@ -102,6 +109,11 @@ def _wait_for_api(base_url: str, server: subprocess.Popen[bytes], timeout: float
 
 def _submit(page: Page, base_url: str, spec: CaptureSpec) -> None:
     """Submit one pinned fake-path task and wait for its terminal label."""
+    if spec.task == "POLICY_PAGE":
+        page.goto(f"{base_url}/ui/policy", wait_until="networkidle")
+        page.locator(".policy-panel").wait_for(state="visible")
+        page.get_by_text(spec.expected_status).first.wait_for(state="visible")
+        return
     page.goto(base_url, wait_until="networkidle")
     page.locator("#task").fill(spec.task)
     page.locator("#max_handoffs").fill(str(spec.max_handoffs))
@@ -246,7 +258,16 @@ def capture() -> None:
                         run_id=real_run_id,
                     )
                     continue
-                _stabilize(page)
+                if spec.task != "POLICY_PAGE":
+                    _stabilize(page)
+                else:
+                    page.add_style_tag(
+                        content=(
+                            "* { animation: none !important; transition: none !important; "
+                            "caret-color: transparent !important; }"
+                        )
+                    )
+                    page.evaluate("document.fonts.ready")
                 path = ASSETS / spec.filename
                 if spec.target is None:
                     page.screenshot(

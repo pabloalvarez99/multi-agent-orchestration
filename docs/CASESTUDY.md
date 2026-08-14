@@ -104,31 +104,95 @@ trade-off explicit.
 
 ## Isolation as a product contract
 
-The free scorecard now runs four committed chaos cases. A crashing Critic returns a non-empty
+The free scorecard grows from four chaos cases in v0.3 to **n ≥ 40** in v1.0, each tagged with
+a family and an **easy / medium / hard** difficulty. A crashing Critic still returns a non-empty
 `degraded` result with `specialist_error`; two consecutive Critic rejections consume both
 allowed retries and still reach Writer on handoff seven; a narrow global budget stops with
 typed `max_handoffs`; and a Research attempt to return `FinalAnswer` stops as
-`policy_violation`. These cases test authority and availability semantics, not prose quality.
+`policy_violation`. Harder rows add concurrent token isolation, restrictive policy fixtures,
+writer crashes after Critic accept, and accounting fields that must match—not just a status
+string. Mechanical predicates fail CI when new rows are all easy or when medium/hard slices
+collapse into status-only clones. These cases test authority and availability semantics, not
+prose quality.
 
 Successful answers are always `result_author="writer"`. Degraded and exhausted outcomes are
 system explanations with `result_author=null`, so the UI does not label an orchestrator error
 or an intermediate memo as Writer output.
 
+## Decision 6 — policy as data (season product)
+
+**Options considered:** keep handoff rules as private Python constants forever; invent a remote
+policy service; encode the entire loop in YAML; or load a versioned document the orchestrator
+actually consults.
+
+v0.3 already had the right invariants, but a staff engineer could still ask whether the product
+was policy or “if-statements with a nice README.” v1.0 commits
+`policies/default-v0.3-characterization.json`, loads it into `OrchestrationPolicy`, and keeps
+pure validation methods as the algorithm. Characterization tests bind the file to today’s happy
+path, budget stop, and Writer-only rules. A second fixture, `forbid-research-to-writer`, removes
+the Critic→Writer edge (and still forbids Research→Writer); the same specialists that complete
+under the default policy terminate `degraded` / `policy_violation` under the fixture. That is the
+proof that **loading different data changes behavior**, not that we renamed a constant.
+
+Every `task_started` event now carries `policy_id` and `policy_hash`. The read-only
+`/ui/policy` page shows the graph and hash without requiring a code tour. ADR-0007 records why
+we rejected a multi-tenant policy SaaS and why we refused to turn YAML into a programming
+language.
+
+## Decision 7 — measure isolation, not vibes
+
+Unit tests that run two threads are necessary but not sufficient as a portfolio claim. The
+season ships a **1000-task** deterministic simulation (`seed=20260814`) that reports
+`swap_rate`, `writer_only_violations`, `degraded_rate`, and `budget_exhausted_rate`. The pass
+gates for release are **`swap_rate=0`** and **`writer_only_violations=0`**. The HTML/JSON
+artifacts are labeled **isolation/plumbing — not multi-agent quality**. If those numbers are
+cited as “agents coordinate well,” the citation is wrong by construction.
+
+Separately, a load probe records p50/p95 for `POST /v1/tasks` on the fake path. The honesty
+line is mandatory: **single isolate / single process**, not multi-region capacity planning.
+Cold-start is reported as the first sample, not hidden.
+
+## Decision 8 — a pack a third party can unzip
+
+File replay (ADR-0006) already survived recycle for a single schema-1 export. The season pack
+adds **policy identity** and a verify path a lawyer or hiring manager can run offline:
+
+- `manifest.json` with `policy_hash`, `seed`, `pack_hash`
+- `policy.json` (the document, not a screenshot)
+- `task.json`, `result.json`, `trace.json`
+- optional zip layout under `docs/assets/sample-trace-pack.zip`
+
+`python -m mao.pack verify` checks policy hash integrity and Writer-only ownership offline.
+`python -m mao.replay` still validates the schema-1 member. The browser loader accepts a pack
+JSON by reading `pack.trace` without uploading bytes to the server. Round-trip tests re-run the
+task under the embedded policy and require matching terminals.
+
 ## Evidence and limits
 
 - `pytest` covers Writer ownership, retry and global budgets, specialist crashes, P2 success,
-  HTTP error, timeout, missing capability, UI states, and capture integrity without sockets.
-- Twelve routing goldens, two boundary cases, and four chaos goldens run with
+  HTTP error, timeout, missing capability, UI states, policy loading, pack verify, isolation
+  simulation gates, and capture integrity without paid APIs.
+- Twelve routing goldens, two boundary cases, and **≥40 chaos goldens** run with
   `network_calls=0` and `billed_usd=0.0`.
 - CI runs Ruff, strict mypy, pytest, and routing/boundary/chaos evals with provider
-  configuration empty.
+  configuration empty; `AGENTIC_RAG_URL` remains unset in CI.
+- Isolation sim artifact: `docs/assets/isolation-sim.json` + HTML; load artifact:
+  `docs/assets/load.json`.
 - The UI capture script starts the real app on localhost and submits the same fake form a
-  reviewer uses; it normalizes only the displayed request ID and records PNG SHA-256 values.
-- The Replay panel and all four committed captures are generated twice with byte-identical
-  manifests; trace lookups declare schema 1 and typed 404 expiry.
-- Live P2 availability is opt-in. Remote-process isolation, hosted-model quality, and a claim
-  that specialists outperform a single model remain outside v0.3.0. File replay is
-  client-side durability (ADR-0006), not multi-instance server storage.
+  reviewer uses; it also captures `/ui/policy`. It normalizes only the displayed request ID and
+  records PNG SHA-256 values in `docs/assets/ui-captures.sha256`.
+- Live P2 availability is opt-in and fail-closed. Remote multi-instance storage, Redis, real
+  LLM specialists as default, and any claim that fake specialists produce quality answers remain
+  **PLANNED / out of free path**. File and pack replay are client-side durability, not a
+  database.
+
+## What we still refuse to claim
+
+We do not claim multi-agent answer quality, faithfulness, or model uplift from template fakes.
+We do not claim that a single Vercel isolate’s p50/p95 is a production SLA. We do not claim that
+process-local FIFO retention is multi-tenant audit storage. We do not invent Redis “for the
+demo.” Those refusals are part of the product: honesty is a feature when the alternative is a
+slide that does not survive `curl` after recycle.
 
 ## Interview version
 
@@ -137,7 +201,7 @@ typed message boundaries, while the orchestrator alone owns routing, a global ha
 and the two-retry Critic loop. Successful text is always Writer-authored; system stops carry a
 separate typed reason and never promote an intermediate memo. Schema-1 traces use logical
 offsets, so same task + seed is exactly comparable, and the last 128 runs are inspectable with
-an explicit serverless-retention caveat. Four `$0` chaos goldens prove that a Critic crash is
-non-empty degraded output, two rejections still reach Writer, max handoffs is a typed stop, and
-Writer impersonation fails closed. That is an auditability and isolation story, not a claim
-about model quality.
+an explicit serverless-retention caveat. Policy is a versioned JSON document with a hash in
+every run; chaos n≥40 and a 1000-task simulation prove isolation plumbing (`swap_rate=0`); a
+trace pack unzips policy, task, seed, trace, and result for offline verify after the process is
+gone. That is an auditability and isolation story, not a claim about model quality.

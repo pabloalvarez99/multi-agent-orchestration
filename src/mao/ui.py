@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from mao.api import TaskRequest, TaskRunner
 from mao.middleware import request_id_of
+from mao.orchestrator import OrchestrationPolicy, load_default_policy
 from mao.runs import RunStore, retain_run
 
 PACKAGE_DIRECTORY: Final = Path(__file__).resolve().parent
@@ -48,6 +49,35 @@ def build_ui_router(runner: TaskRunner, runs: RunStore) -> APIRouter:
                 request,
                 task=DEMO_TASK,
                 selected_max_handoffs="8",
+            ),
+        )
+
+    @router.get("/ui/policy", response_class=HTMLResponse)
+    def policy_console(request: Request) -> Response:
+        """Render the loadable default policy document (read-only)."""
+        document = load_default_policy()
+        policy = OrchestrationPolicy(document)
+        edges = [
+            f"{sender.value} → {recipient.value}"
+            for sender, recipient in sorted(
+                document.allowed_handoffs,
+                key=lambda edge: (edge[0].value, edge[1].value),
+            )
+        ]
+        return templates.TemplateResponse(
+            request=request,
+            name="policy.html",
+            context=_context(
+                request,
+                policy_id=document.policy_id,
+                policy_version=document.policy_version,
+                policy_hash=policy.policy_hash,
+                max_handoffs=document.budgets.max_handoffs,
+                max_research_retries=document.budgets.max_research_retries,
+                final_author=document.authority.final_author,
+                edges=edges,
+                stop_reasons=list(document.terminals.stop_reasons),
+                statuses=list(document.terminals.statuses),
             ),
         )
 

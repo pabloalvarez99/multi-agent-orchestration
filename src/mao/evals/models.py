@@ -8,6 +8,37 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from mao.models import AgentName, StopReason, TaskStatus
 
+ChaosScenario = Literal[
+    "specialist_crash",
+    "specialist_crash_research",
+    "specialist_crash_writer",
+    "critic_reject_twice",
+    "critic_reject_until_limit",
+    "max_handoffs",
+    "writer_impersonation",
+    "critic_impersonation",
+    "illegal_handoff",
+    "illegal_handoff_research_writer",
+    "writer_crash_after_accept",
+    "concurrent_isolation",
+    "policy_no_writer_path",
+    "retry_then_budget",
+    "max_handoffs_mid_retry",
+]
+
+ChaosDifficulty = Literal["easy", "medium", "hard"]
+ChaosFamily = Literal[
+    "specialist_crash",
+    "writer_impersonation",
+    "illegal_handoff",
+    "critic_reject_loop",
+    "max_handoffs",
+    "writer_crash_after_accept",
+    "concurrent_isolation",
+    "policy_budget_matrix",
+    "replay_integrity",
+]
+
 
 class GoldenTask(BaseModel):
     """One deterministic orchestration scenario and its expected accounting."""
@@ -61,28 +92,30 @@ class BoundaryResult(BaseModel):
 
 
 class ChaosGolden(BaseModel):
-    """One deterministic fault-injection expectation."""
+    """One deterministic fault-injection expectation with difficulty."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     id: str = Field(min_length=1)
-    scenario: Literal[
-        "specialist_crash",
-        "critic_reject_twice",
-        "max_handoffs",
-        "writer_impersonation",
-    ]
+    scenario: ChaosScenario
+    difficulty: ChaosDifficulty = "easy"
+    family: ChaosFamily
     task: str = Field(min_length=1, max_length=8_000)
     max_handoffs: int = Field(ge=1, le=64)
     expected_status: TaskStatus
     expected_stop_reason: StopReason
     expected_writer_finished: bool
+    expected_handoffs: int | None = Field(default=None, ge=0)
+    expected_retries: int | None = Field(default=None, ge=0, le=2)
+    max_research_retries: int | None = Field(default=None, ge=0, le=2)
+    policy_id: str | None = None
+    pair_token: str | None = None
 
 
 class ChaosResult(BaseModel):
     """Observed chaos outcome and invariant verdict."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(frozen=True)
 
     id: str
     status: TaskStatus
@@ -91,6 +124,8 @@ class ChaosResult(BaseModel):
     non_empty_result: bool
     handoffs_used: int = Field(ge=0)
     research_retries: int = Field(ge=0, le=2)
+    difficulty: ChaosDifficulty
+    family: ChaosFamily
     passed: bool
     failures: tuple[str, ...] = ()
 

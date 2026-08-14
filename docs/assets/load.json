@@ -1,0 +1,13 @@
+{
+  "n": 50,
+  "p50_ms": 7.966,
+  "p95_ms": 21.365,
+  "mean_ms": 10.401,
+  "min_ms": 4.679,
+  "max_ms": 51.608,
+  "cold_start_ms": 51.608,
+  "honesty": "single isolate / single process TestClient \u2014 not multi-region capacity planning",
+  "path": "POST /v1/tasks",
+  "research": "fake",
+  "billed_usd": 0.0
+}
