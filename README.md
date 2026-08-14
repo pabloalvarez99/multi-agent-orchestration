@@ -67,10 +67,10 @@ pytest -q
    grounded citations, refusal, and offline evaluation (**live: v0.1.0**)
 2. [agentic-rag-research](https://github.com/pabloalvarez99/agentic-rag-research) — bounded
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
-   (**M5 live; release planned**)
+   (**v0.1.0 / M6 live**)
 3. **multi-agent-orchestration** — coordination and handoffs (**M4 live; release planned**)
 4. [RepoMind](https://github.com/pabloalvarez99/repomind) — AST-aware code intelligence
-   with grounded `path:line` answers (**M3 live; CLI/evals planned**)
+   with grounded `path:line` answers (**M5 live; JSON CLI + 14-case fixture eval**)
 5. AI Platform — gateway and operations (**planned**)
 
 ## Next boundary
