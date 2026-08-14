@@ -68,6 +68,13 @@ CAPTURE_SPECS: Final = (
         expected_status="Done",
         target=".replay-panel",
     ),
+    CaptureSpec(
+        filename="ui-replay-from-file.png",
+        task="Offline file replay after server forgets",
+        max_handoffs=8,
+        expected_status="Done",
+        target=".file-replay-loader",
+    ),
 )
 
 
@@ -110,10 +117,11 @@ def _stabilize(page: Page) -> None:
     request_id = page.locator(".diagnostics code")
     request_id.wait_for(state="visible")
     request_id.evaluate("(node, value) => { node.textContent = value; }", FIXED_REQUEST_ID)
-    replay_request_id = page.locator(".replay-meta div:nth-child(2) code")
-    replay_request_id.evaluate(
-        "(node, value) => { node.textContent = value; }", FIXED_REQUEST_ID
-    )
+    replay_request_id = page.locator(".replay-panel .replay-meta div:nth-child(2) code")
+    if replay_request_id.count():
+        replay_request_id.first.evaluate(
+            "(node, value) => { node.textContent = value; }", FIXED_REQUEST_ID
+        )
     timings = page.locator(".timing-value")
     for index in range(timings.count()):
         timings.nth(index).evaluate("node => { node.textContent = '0.100 ms'; }")
@@ -124,6 +132,41 @@ def _stabilize(page: Page) -> None:
         )
     )
     page.evaluate("document.fonts.ready")
+
+
+def _capture_file_replay(
+    page: Page,
+    base_url: str,
+    *,
+    path: Path,
+    run_id: str,
+) -> None:
+    """Download export JSON, open home, load the file, capture offline panel."""
+    export = page.request.get(f"{base_url}/ui/tasks/{run_id}/export.json")
+    assert export.ok, f"export download failed: {export.status} for {run_id}"
+    fixture = ASSETS / "_capture-export.json"
+    fixture.write_text(export.text(), encoding="utf-8", newline="\n")
+    page.goto(base_url, wait_until="networkidle")
+    page.locator("#trace-file").set_input_files(str(fixture))
+    page.locator(".file-replay-panel").wait_for(state="visible")
+    page.locator(".file-replay-trace").wait_for(state="visible")
+    page.locator(".file-replay-panel .replay-meta div:nth-child(2) code").evaluate(
+        "(node, value) => { node.textContent = value; }", FIXED_REQUEST_ID
+    )
+    page.add_style_tag(
+        content=(
+            "* { animation: none !important; transition: none !important; "
+            "caret-color: transparent !important; }"
+        )
+    )
+    page.evaluate("document.fonts.ready")
+    # Capture loader + rendered offline timeline together.
+    page.locator("main.shell").screenshot(
+        path=path,
+        animations="disabled",
+        caret="hide",
+    )
+    fixture.unlink(missing_ok=True)
 
 
 def _write_manifest() -> None:
@@ -194,6 +237,15 @@ def capture() -> None:
             )
             for spec in CAPTURE_SPECS:
                 _submit(page, base_url, spec)
+                if spec.filename == "ui-replay-from-file.png":
+                    real_run_id = page.locator(".diagnostics code").inner_text().strip()
+                    _capture_file_replay(
+                        page,
+                        base_url,
+                        path=ASSETS / spec.filename,
+                        run_id=real_run_id,
+                    )
+                    continue
                 _stabilize(page)
                 path = ASSETS / spec.filename
                 if spec.target is None:
@@ -204,7 +256,7 @@ def capture() -> None:
                         caret="hide",
                     )
                 else:
-                    page.locator(spec.target).screenshot(
+                    page.locator(spec.target).first.screenshot(
                         path=path,
                         animations="disabled",
                         caret="hide",

@@ -38,7 +38,7 @@ def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
             "Bounded research, critic, and writer specialists with a deterministic "
             "credential-free default path."
         ),
-        version="0.2.0",
+        version="0.3.0",
     )
     application.add_middleware(RequestIdMiddleware)
     application.add_middleware(MetricsMiddleware, registry=metrics)

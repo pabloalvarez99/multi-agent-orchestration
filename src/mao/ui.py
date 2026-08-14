@@ -123,7 +123,7 @@ def build_ui_router(runner: TaskRunner, runs: RunStore) -> APIRouter:
 
     @router.get("/ui/tasks/{request_id}/timeline.json")
     def download_timeline(request_id: str) -> Response:
-        """Download the exact JSON-safe trace retained for one UI run."""
+        """Download the bare event list for one UI run (legacy attachment)."""
         trace = runs.get_trace(request_id)
         if trace is None:
             return JSONResponse(
@@ -134,6 +134,28 @@ def build_ui_router(runner: TaskRunner, runs: RunStore) -> APIRouter:
             content=[event.model_dump(mode="json") for event in trace.events],
             headers={
                 "Content-Disposition": f'attachment; filename="timeline-{request_id}.json"'
+            },
+        )
+
+    @router.get("/ui/tasks/{request_id}/export.json")
+    def download_export(request_id: str) -> Response:
+        """Download schema-1 envelope + run record for offline replay-from-file."""
+        record = runs.get(request_id)
+        trace = runs.get_trace(request_id)
+        if record is None or trace is None:
+            return JSONResponse(
+                status_code=int(HTTPStatus.NOT_FOUND),
+                content={"error": "export_not_found", "run_id": request_id},
+            )
+        return JSONResponse(
+            content={
+                "trace_schema": trace.trace_schema,
+                "run_id": trace.run_id,
+                "run": record.model_dump(mode="json"),
+                "events": [event.model_dump(mode="json") for event in trace.events],
+            },
+            headers={
+                "Content-Disposition": f'attachment; filename="trace-{request_id}.json"'
             },
         )
 

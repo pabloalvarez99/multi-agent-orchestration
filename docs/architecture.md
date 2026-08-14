@@ -1,12 +1,13 @@
 # Architecture — bounded specialist coordination
 
-Status: **P3 v0.2.0 LIVE.** Integrated `main`
+Status: **P3 v0.3.0 LIVE.** Integrated `main`
 contains immutable message/result models, deterministic Research/Critic/Writer specialists,
 an in-memory bus, explicit transition policy, global handoff and Critic-retry budgets,
 Writer-only final enforcement, typed degraded/budget-exhausted results, an ordered JSON-safe
-timeline, `POST /v1/tasks`, a JSON CLI, trace UI, an 18-case offline scorecard, two
-configuration-boundary cases, an optional P2 HTTP Research agent, request IDs, and a non-root
-container. There is no hosted model default or remote-process isolation.
+timeline, `POST /v1/tasks`, offline schema-1 file replay, a JSON CLI, trace UI, an 18-case
+offline scorecard, two configuration-boundary cases, an optional P2 HTTP Research agent,
+request IDs, and a non-root container. There is no hosted model default or remote-process
+isolation; durable audit after recycle is client-side file replay (ADR-0006).
 
 The system exists to answer one question: how can several specialists cooperate without
 turning role prompts into an unbounded, unauditable conversation?

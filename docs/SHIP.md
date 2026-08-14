@@ -1,6 +1,6 @@
 # Ship truth
 
-**Status: P3 v0.2.0 LIVE.** The
+**Status: P3 v0.3.0 LIVE.** The
 repository can be cloned, tested, and run without a key. The fake team remains the default
 for library, API, CLI, UI, and 18-case scorecard. An explicitly selected HTTP Research agent
 can call P2 when `AGENTIC_RAG_URL` is configured and fails closed otherwise.
@@ -45,12 +45,15 @@ curl http://127.0.0.1:8000/metrics
 | Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |
 | Prometheus text metrics | **LIVE** | content type, stable metric names, and post-task counter test |
 | Timeline JSON download | **LIVE** | attachment header and exact in-memory event sequence test |
+| Schema-1 export + file replay | **LIVE (client-side)** | UI load, `python -m mao.replay`, fixture equality, recycle-clear test |
 | Versioned replay endpoints | **LIVE (process-local)** | schema 1, run metadata/trace endpoints, typed 404, FIFO eviction test |
+| Concurrent task isolation | **LIVE** | two threads, Writer text and traces do not swap |
 | Deterministic event offsets | **LIVE** | same task + seed produces the exact event sequence; ADR-0005 |
 | Per-specialist elapsed timings | **LIVE (debug)** | injected-clock accounting test and result-page test |
 | Generated UI captures | **LIVE** | Playwright script, pinned inputs, committed SHA-256 manifest |
 | Non-root Docker + standalone Compose | **LIVE** | local build and container smoke |
-| Tagged `v0.2.0` release | **LIVE** | public release targets the exact green release commit |
+| Tagged `v0.2.0` release | **LIVE** | GitHub Release object + hosted free path on `8155274` |
+| Tagged `v0.3.0` release | **LIVE** | offline file replay, isolation under load, ADR-0006 |
 
 ## Authority and stop matrix
 
@@ -77,6 +80,10 @@ an intermediate specialist memo presented as an answer.
 ### Versioned replay
 
 [![Replay panel with schema 1 and retained-run links](assets/ui-replay.png)](assets/ui-replay.png)
+
+### Offline file replay (after the server forgets)
+
+[![Load trace JSON panel for client-side schema-1 replay](assets/ui-replay-from-file.png)](assets/ui-replay-from-file.png)
 
 *Deterministic fake specialists. Not a quality claim.* The script uses the real localhost app
 and fake form path. It pins viewport, locale, task text, and budgets, disables motion, and
@@ -105,7 +112,9 @@ the fake team and does not claim hosted-model quality.
 - traces are ordered, JSON-safe, and omit full task content;
 - `/metrics` exposes process, request, terminal-status, and handoff signals without a backend;
 - UI traces download as JSON attachments, and specialist timings remain debug-only;
+- schema-1 exports reload offline via UI file input and `python -m mao.replay`;
 - retained runs expose schema 1 metadata and events until process recycle or FIFO eviction;
+- concurrent fake tasks keep Writer text and traces isolated in one process;
 - all 12 committed golden tasks meet their routing/accounting expectations;
 - all four chaos goldens preserve non-empty terminal output and declared ownership;
 - ruff, strict mypy, unit tests, and all routing/boundary/chaos evals run on Python 3.12; and
@@ -114,9 +123,10 @@ the fake team and does not claim hosted-model quality.
 It does not prove answer quality, remote-process isolation, live P2 availability, or
 multi-model collaboration. HTTP tests prove the boundary contract, not quality uplift.
 
-## Non-goals for v0.2.0
+## Non-goals for v0.3.0
 
 - No claim that several agents outperform one.
+- No durable multi-instance server store (KV/Postgres). File replay is client-side only.
 - No hosted model default, durable shared memory, or arbitrary tools.
 - No remote-agent isolation, hosted quality score, or cost comparison.
 - No silent promotion of target architecture to LIVE documentation.

@@ -36,9 +36,11 @@ def test_submit_renders_status_request_id_and_ordered_trace_without_network(
     assert "Writer output" in response.text
     assert "Ordered execution trace" in response.text
     assert "Specialist time" in response.text
-    assert "Download timeline JSON" in response.text
+    assert "Download export JSON" in response.text
+    assert "Download events only" in response.text
     assert "Audit this run" in response.text
     assert "Versioned trace" in response.text
+    assert "Load trace JSON" in response.text
     assert "orchestrator" in response.text
     assert "writer" in response.text
     assert response.headers["x-request-id"] in response.text

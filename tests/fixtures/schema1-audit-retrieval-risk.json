@@ -1,0 +1,189 @@
+{
+  "trace_schema": 1,
+  "run_id": "fixture-audit-retrieval-risk",
+  "events": [
+    {
+      "sequence": 0,
+      "event": "task_started",
+      "ts_offset_ms": 0,
+      "actor": "orchestrator",
+      "payload": {
+        "max_handoffs": 8,
+        "max_research_retries": 2,
+        "provider": "fake",
+        "billed_usd": 0.0,
+        "seed": 41
+      }
+    },
+    {
+      "sequence": 1,
+      "event": "handoff",
+      "ts_offset_ms": 1,
+      "actor": "orchestrator",
+      "payload": {
+        "recipient": "research",
+        "attempt": 0,
+        "handoff_number": 1
+      }
+    },
+    {
+      "sequence": 2,
+      "event": "agent_output",
+      "ts_offset_ms": 2,
+      "actor": "research",
+      "payload": {
+        "kind": "handoff",
+        "recipient": "critic"
+      }
+    },
+    {
+      "sequence": 3,
+      "event": "decision",
+      "ts_offset_ms": 3,
+      "actor": "orchestrator",
+      "payload": {
+        "action": "route",
+        "recipient": "critic",
+        "research_retries": 0
+      }
+    },
+    {
+      "sequence": 4,
+      "event": "handoff",
+      "ts_offset_ms": 4,
+      "actor": "research",
+      "payload": {
+        "recipient": "critic",
+        "attempt": 0,
+        "handoff_number": 2
+      }
+    },
+    {
+      "sequence": 5,
+      "event": "agent_output",
+      "ts_offset_ms": 5,
+      "actor": "critic",
+      "payload": {
+        "kind": "handoff",
+        "recipient": "research"
+      }
+    },
+    {
+      "sequence": 6,
+      "event": "decision",
+      "ts_offset_ms": 6,
+      "actor": "orchestrator",
+      "payload": {
+        "action": "re_research",
+        "recipient": "research",
+        "research_retries": 1
+      }
+    },
+    {
+      "sequence": 7,
+      "event": "handoff",
+      "ts_offset_ms": 7,
+      "actor": "critic",
+      "payload": {
+        "recipient": "research",
+        "attempt": 1,
+        "handoff_number": 3
+      }
+    },
+    {
+      "sequence": 8,
+      "event": "agent_output",
+      "ts_offset_ms": 8,
+      "actor": "research",
+      "payload": {
+        "kind": "handoff",
+        "recipient": "critic"
+      }
+    },
+    {
+      "sequence": 9,
+      "event": "decision",
+      "ts_offset_ms": 9,
+      "actor": "orchestrator",
+      "payload": {
+        "action": "route",
+        "recipient": "critic",
+        "research_retries": 1
+      }
+    },
+    {
+      "sequence": 10,
+      "event": "handoff",
+      "ts_offset_ms": 10,
+      "actor": "research",
+      "payload": {
+        "recipient": "critic",
+        "attempt": 1,
+        "handoff_number": 4
+      }
+    },
+    {
+      "sequence": 11,
+      "event": "agent_output",
+      "ts_offset_ms": 11,
+      "actor": "critic",
+      "payload": {
+        "kind": "handoff",
+        "recipient": "writer"
+      }
+    },
+    {
+      "sequence": 12,
+      "event": "decision",
+      "ts_offset_ms": 12,
+      "actor": "orchestrator",
+      "payload": {
+        "action": "route",
+        "recipient": "writer",
+        "research_retries": 1
+      }
+    },
+    {
+      "sequence": 13,
+      "event": "handoff",
+      "ts_offset_ms": 13,
+      "actor": "critic",
+      "payload": {
+        "recipient": "writer",
+        "attempt": 1,
+        "handoff_number": 5
+      }
+    },
+    {
+      "sequence": 14,
+      "event": "agent_output",
+      "ts_offset_ms": 14,
+      "actor": "writer",
+      "payload": {
+        "kind": "final"
+      }
+    },
+    {
+      "sequence": 15,
+      "event": "decision",
+      "ts_offset_ms": 15,
+      "actor": "orchestrator",
+      "payload": {
+        "action": "complete",
+        "reason": "writer_final"
+      }
+    },
+    {
+      "sequence": 16,
+      "event": "stop",
+      "ts_offset_ms": 16,
+      "actor": "orchestrator",
+      "payload": {
+        "status": "done",
+        "stop_reason": "writer_final",
+        "handoffs_used": 5,
+        "research_retries": 1
+      }
+    }
+  ]
+}

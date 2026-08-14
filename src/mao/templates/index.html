@@ -7,5 +7,22 @@
     <p class="lede">A deterministic Research–Critic–Writer team, bounded by policy and exposed event by event. No model key, no hidden provider call, no bill.</p>
   </header>
   {% include "_form.html" %}
-  <footer class="page-footer"><span>Free path is the default contract.</span><nav aria-label="Developer links"><a href="/docs">API docs</a><a href="/health">Health</a></nav></footer>
+  <section class="file-replay-loader console" aria-labelledby="load-trace-heading">
+    <div class="panel-heading">
+      <div>
+        <p class="section-label">Client-side durability</p>
+        <h2 id="load-trace-heading">Load trace JSON</h2>
+      </div>
+      <span class="mode">No upload · local only</span>
+    </div>
+    <p class="lede-small">After a Vercel recycle, <code>GET /v1/runs/{id}</code> returns 404.
+    Download a schema-1 export while the run is warm, then reload the timeline here without
+    contacting the server.</p>
+    <label for="trace-file">Trace file</label>
+    <input id="trace-file" name="trace_file" type="file" accept="application/json,.json">
+    <p class="timing-note">Accepted: versioned envelope, UI export pack, or bare events array.
+    Validation stays in the browser; invalid files never hit an API route.</p>
+  </section>
+  <div id="file-replay-root" class="file-replay-root" aria-live="polite"></div>
+  <footer class="page-footer"><span>Free path is the default contract.</span><nav aria-label="Developer links"><a href="/docs">API docs</a><a href="/health">Health</a><a href="#load-trace-heading">Load trace</a></nav></footer>
 {% endblock %}

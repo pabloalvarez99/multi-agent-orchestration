@@ -96,6 +96,16 @@ class RunStore:
             item = self._items.get(run_id)
             return item[1] if item is not None else None
 
+    def clear(self) -> None:
+        """Drop every retained run (recycle-equivalent for local demos and tests)."""
+        with self._lock:
+            self._items.clear()
+
+    def __len__(self) -> int:
+        """Return how many runs this process currently retains."""
+        with self._lock:
+            return len(self._items)
+
 
 def retain_run(
     store: RunStore,
