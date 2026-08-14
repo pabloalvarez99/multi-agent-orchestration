@@ -48,6 +48,11 @@ class Orchestrator:
         self._policy = policy or OrchestrationPolicy()
         self._clock_ns = clock_ns
 
+    @property
+    def policy(self) -> OrchestrationPolicy:
+        """Return the policy instance driving this orchestrator."""
+        return self._policy
+
     def run(
         self,
         task: str,
@@ -56,7 +61,7 @@ class Orchestrator:
         seed: int = 0,
     ) -> TaskResult:
         """Execute ``task`` until Writer finishes, a budget ends, or a specialist fails."""
-        limits = budget or TaskBudget()
+        limits = budget or self._policy.default_budget()
         current = HandoffMessage(
             sender=AgentName.ORCHESTRATOR,
             recipient=AgentName.RESEARCH,
@@ -78,6 +83,8 @@ class Orchestrator:
                 "provider": self._research_provider,
                 "billed_usd": 0.0,
                 "seed": seed,
+                "policy_id": self._policy.policy_id,
+                "policy_hash": self._policy.policy_hash,
             },
         )
 
@@ -298,9 +305,12 @@ def run_task(
     budget: TaskBudget | None = None,
     research_agent: Agent | None = None,
     seed: int = 0,
+    policy: OrchestrationPolicy | None = None,
 ) -> TaskResult:
-    """Run a task with the default credential-free team."""
-    return Orchestrator(research_agent=research_agent).run(task, budget=budget, seed=seed)
+    """Run a task with the default credential-free team and optional policy."""
+    return Orchestrator(research_agent=research_agent, policy=policy).run(
+        task, budget=budget, seed=seed
+    )
 
 
 __all__ = ["Orchestrator", "run_task"]

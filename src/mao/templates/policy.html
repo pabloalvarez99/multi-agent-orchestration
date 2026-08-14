@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Policy · Specialist Console{% endblock %}
+{% block content %}
+  <header class="hero compact">
+    <p class="kicker">Policy as data</p>
+    <h1>Handoff rules<br><em>loaded from a file.</em></h1>
+    <p class="lede">Default characterization policy for v0.3 behavior. Not if-statements alone — a versioned document the orchestrator loads.</p>
+  </header>
+  <article class="outcome outcome-done policy-panel" aria-labelledby="policy-heading">
+    <div class="outcome-head">
+      <div>
+        <p class="section-label">Committed policy</p>
+        <h2 id="policy-heading">{{ policy_id }}</h2>
+      </div>
+      <dl class="stats">
+        <div><dt>Version</dt><dd>{{ policy_version }}</dd></div>
+        <div><dt>Max handoffs</dt><dd>{{ max_handoffs }}</dd></div>
+        <div><dt>Max retries</dt><dd>{{ max_research_retries }}</dd></div>
+      </dl>
+    </div>
+    <section aria-labelledby="hash-heading">
+      <p class="section-label">Integrity</p>
+      <h3 id="hash-heading">Policy hash</h3>
+      <p class="writer-result"><code>{{ policy_hash }}</code></p>
+      <p class="timing-note">SHA-256 of the canonical JSON document. Embedded in task traces and season packs.</p>
+    </section>
+    <section aria-labelledby="edges-heading">
+      <p class="section-label">Allowed handoffs</p>
+      <h3 id="edges-heading">Graph</h3>
+      <ul class="agent-list">{% for edge in edges %}<li>{{ edge }}</li>{% endfor %}</ul>
+    </section>
+    <section aria-labelledby="authority-heading">
+      <p class="section-label">Authority</p>
+      <h3 id="authority-heading">Final author</h3>
+      <p class="writer-result"><code>{{ final_author }}</code> only may own <code>status=done</code>.</p>
+      <p class="timing-note">Terminals: {{ statuses | join(', ') }}. Stops: {{ stop_reasons | join(', ') }}.</p>
+    </section>
+    <footer class="diagnostics">
+      <span>Source</span><code>policies/default-v0.3-characterization.json</code>
+      <span class="mode">Read-only</span>
+    </footer>
+  </article>
+  <footer class="page-footer">
+    <span>Policy is the product this season.</span>
+    <nav aria-label="Developer links">
+      <a href="/">Task console</a>
+      <a href="/ui/policy">Policy</a>
+      <a href="/docs">API docs</a>
+    </nav>
+  </footer>
+{% endblock %}

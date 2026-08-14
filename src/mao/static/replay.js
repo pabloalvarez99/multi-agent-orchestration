@@ -26,6 +26,14 @@
     if (isObject(raw.trace) && Array.isArray(raw.trace.events)) {
       return normalizeEnvelope(raw.trace);
     }
+    // Season trace pack (policy + task + result + trace)
+    if (
+      (raw.pack_kind === "mao-trace-pack" || isObject(raw.manifest)) &&
+      isObject(raw.trace) &&
+      Array.isArray(raw.trace.events)
+    ) {
+      return normalizeEnvelope(raw.trace);
+    }
     if (Array.isArray(raw.events)) {
       var runId = raw.run_id;
       if (!runId && isObject(raw.run) && raw.run.run_id) {
@@ -153,8 +161,7 @@
       "<p class=\"error-label\">" +
       escapeHtml(message) +
       "</p>" +
-      "<p>Expected a schema-1 envelope " +
-      "(<code>trace_schema</code>, <code>run_id</code>, <code>events</code>) " +
+      "<p>Expected a schema-1 envelope, UI export, season <code>mao-trace-pack</code>, " +
       "or a bare events array from this console.</p>" +
       "</section>";
   }

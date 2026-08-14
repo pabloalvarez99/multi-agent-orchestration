@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "multi-agent-orchestration"
-version = "0.3.0"
-description = "Bounded multi-agent orchestration with schema-1 traces and offline file replay."
+version = "1.0.0"
+description = "Bounded multi-agent orchestration with loadable policy, chaos isolation, and offline trace packs."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }

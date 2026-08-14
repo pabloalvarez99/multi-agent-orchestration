@@ -1,0 +1,35 @@
+{
+  "policy_version": "1.0",
+  "policy_id": "forbid-research-to-writer",
+  "allowed_handoffs": [
+    ["orchestrator", "research"],
+    ["research", "critic"],
+    ["critic", "research"]
+  ],
+  "budgets": {
+    "max_handoffs": 8,
+    "max_research_retries": 2
+  },
+  "authority": {
+    "final_author": "writer",
+    "non_done_result_author": null
+  },
+  "terminals": {
+    "statuses": ["done", "degraded", "budget_exhausted"],
+    "stop_reasons": [
+      "writer_final",
+      "max_handoffs",
+      "retry_limit",
+      "specialist_error",
+      "policy_violation"
+    ]
+  },
+  "degraded": {
+    "require_non_empty_explanation": true,
+    "never_promote_intermediate_memo": true
+  },
+  "providers": {
+    "default_research": "fake",
+    "optional_http_p2": "fail_closed"
+  }
+}

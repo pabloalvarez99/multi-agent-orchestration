@@ -1,9 +1,11 @@
 # Ship truth
 
-**Status: P3 v0.3.0 LIVE.** The
+**Status: P3 v1.0.0 LIVE.** The
 repository can be cloned, tested, and run without a key. The fake team remains the default
-for library, API, CLI, UI, and 18-case scorecard. An explicitly selected HTTP Research agent
-can call P2 when `AGENTIC_RAG_URL` is configured and fails closed otherwise.
+for library, API, CLI, UI, chaos n≥40 scorecard, isolation simulation, and trace packs.
+Policy loads from `policies/default-v0.3-characterization.json` (ADR-0007). An explicitly
+selected HTTP Research agent can call P2 when `AGENTIC_RAG_URL` is configured and fails closed
+otherwise.
 
 **Hosted free path LIVE:** <https://pax-orchestration.vercel.app>. It runs the deterministic
 fake specialists and spends no model credits. Expect serverless cold starts; metrics and
@@ -39,7 +41,13 @@ curl http://127.0.0.1:8000/metrics
 | Typed terminal reasons | **LIVE** | `writer_final`, `max_handoffs`, `retry_limit`, `specialist_error`, `policy_violation` |
 | Ordered JSON-safe multi-agent timeline | **LIVE** | completeness, ordering, privacy, and budget-stop tests |
 | 12-task golden evaluation | **LIVE** | three slices; [schema and limits](../data/eval/README.md) |
-| Four chaos goldens | **LIVE** | crash, reject twice, global budget, Writer impersonation; `$0`, offline |
+| Chaos goldens n≥40 | **LIVE** | easy/medium/hard predicates; families for isolation; `$0`, offline |
+| Loadable policy document | **LIVE** | default characterizes v0.3; fixture changes happy path; `/ui/policy` |
+| Isolation simulation n=1000 | **LIVE** | `swap_rate=0`, `writer_only_violations=0`; JSON+HTML plumbing label |
+| Trace pack | **LIVE** | policy hash + task + seed + trace + result; verify + UI load |
+| Load p50/p95 artifact | **LIVE** | `docs/assets/load.json`; single-isolate honesty |
+| Tagged `v1.0.0` release | **LIVE** | season checklist; PLANNED list in release notes |
+| Four chaos goldens (v0.3 baseline) | **LIVE** | retained inside n≥40 suite |
 | HTTP-absent evaluation slice | **LIVE** | two configuration cases, zero network calls |
 | Optional P2 integration | **LIVE (opt-in)** | mocked success/error/timeout tests; ADR-0004 |
 | Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |

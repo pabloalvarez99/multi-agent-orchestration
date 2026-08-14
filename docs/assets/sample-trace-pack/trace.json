@@ -1,6 +1,6 @@
 {
   "trace_schema": 1,
-  "run_id": "schema1-audit-retrieval-risk",
+  "run_id": "season-demo-pack",
   "events": [
     {
       "sequence": 0,
@@ -67,7 +67,7 @@
       "actor": "critic",
       "payload": {
         "kind": "handoff",
-        "recipient": "research"
+        "recipient": "writer"
       }
     },
     {
@@ -76,9 +76,9 @@
       "ts_offset_ms": 6,
       "actor": "orchestrator",
       "payload": {
-        "action": "re_research",
-        "recipient": "research",
-        "research_retries": 1
+        "action": "route",
+        "recipient": "writer",
+        "research_retries": 0
       }
     },
     {
@@ -87,8 +87,8 @@
       "ts_offset_ms": 7,
       "actor": "critic",
       "payload": {
-        "recipient": "research",
-        "attempt": 1,
+        "recipient": "writer",
+        "attempt": 0,
         "handoff_number": 3
       }
     },
@@ -96,10 +96,9 @@
       "sequence": 8,
       "event": "agent_output",
       "ts_offset_ms": 8,
-      "actor": "research",
+      "actor": "writer",
       "payload": {
-        "kind": "handoff",
-        "recipient": "critic"
+        "kind": "final"
       }
     },
     {
@@ -108,83 +107,20 @@
       "ts_offset_ms": 9,
       "actor": "orchestrator",
       "payload": {
-        "action": "route",
-        "recipient": "critic",
-        "research_retries": 1
-      }
-    },
-    {
-      "sequence": 10,
-      "event": "handoff",
-      "ts_offset_ms": 10,
-      "actor": "research",
-      "payload": {
-        "recipient": "critic",
-        "attempt": 1,
-        "handoff_number": 4
-      }
-    },
-    {
-      "sequence": 11,
-      "event": "agent_output",
-      "ts_offset_ms": 11,
-      "actor": "critic",
-      "payload": {
-        "kind": "handoff",
-        "recipient": "writer"
-      }
-    },
-    {
-      "sequence": 12,
-      "event": "decision",
-      "ts_offset_ms": 12,
-      "actor": "orchestrator",
-      "payload": {
-        "action": "route",
-        "recipient": "writer",
-        "research_retries": 1
-      }
-    },
-    {
-      "sequence": 13,
-      "event": "handoff",
-      "ts_offset_ms": 13,
-      "actor": "critic",
-      "payload": {
-        "recipient": "writer",
-        "attempt": 1,
-        "handoff_number": 5
-      }
-    },
-    {
-      "sequence": 14,
-      "event": "agent_output",
-      "ts_offset_ms": 14,
-      "actor": "writer",
-      "payload": {
-        "kind": "final"
-      }
-    },
-    {
-      "sequence": 15,
-      "event": "decision",
-      "ts_offset_ms": 15,
-      "actor": "orchestrator",
-      "payload": {
         "action": "complete",
         "reason": "writer_final"
       }
     },
     {
-      "sequence": 16,
+      "sequence": 10,
       "event": "stop",
-      "ts_offset_ms": 16,
+      "ts_offset_ms": 10,
       "actor": "orchestrator",
       "payload": {
         "status": "done",
         "stop_reason": "writer_final",
-        "handoffs_used": 5,
-        "research_retries": 1
+        "handoffs_used": 3,
+        "research_retries": 0
       }
     }
   ]

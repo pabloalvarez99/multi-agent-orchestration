@@ -14,10 +14,11 @@ Project 3 in a five-system [AI Engineering portfolio](https://github.com/pabloal
 deterministic Research, Critic, and Writer specialists coordinated under explicit handoff and
 retry budgets, with Writer-only final output and typed degraded outcomes.
 
-> **v0.3.0 LIVE.** The fake team remains the default for the
-> library, API, CLI, browser console, and 18-case offline scorecard. Research can optionally cross the
-> public P2 HTTP boundary when `AGENTIC_RAG_URL` is explicitly configured. No model key is
-> required and the default path makes no network call.
+> **v1.0.0 LIVE.** Policy is loadable data (not if-statements alone). Fake team remains the default for the
+> library, API, CLI, browser console, chaos n≥40 isolation scorecard, 1000-task isolation sim, and
+> offline trace packs. Research can optionally cross the public P2 HTTP boundary when
+> `AGENTIC_RAG_URL` is explicitly configured. No model key is required and the default path makes
+> no network call.
 
 **Hosted free path:** [pax-orchestration.vercel.app](https://pax-orchestration.vercel.app)
 opens the same fake-specialist console with no account, API key, or paid model. The hosted
@@ -61,8 +62,10 @@ not durable storage. After recycle, use **Load trace JSON** in the console or:
 python -m mao.replay path/to/export.json   # exit 0 valid schema-1, 2 invalid
 ```
 
-Client-side file replay is the durable path this week — not Vercel KV/Postgres
-([ADR-0006](docs/adr/0006-client-side-file-replay.md)).
+Client-side file replay and season **trace packs** are the durable path — not Vercel KV/Postgres
+([ADR-0006](docs/adr/0006-client-side-file-replay.md), [ADR-0007](docs/adr/0007-policy-as-data.md)).
+Open the [policy console](https://pax-orchestration.vercel.app/ui/policy) for the committed graph
+and hash. Isolation metrics: [isolation-sim.html](docs/assets/isolation-sim.html) (plumbing label).
 
 ## Run the free path
 
