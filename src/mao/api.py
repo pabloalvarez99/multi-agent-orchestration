@@ -12,6 +12,7 @@ from mao.agents import ResearchChoice, build_research_agent
 from mao.models import (
     TRACE_SCHEMA_VERSION,
     AgentName,
+    StopReason,
     TaskBudget,
     TaskResult,
     TaskStatus,
@@ -50,7 +51,9 @@ class TaskResponse(BaseModel):
 
     trace_schema: Literal[1] = TRACE_SCHEMA_VERSION
     status: TaskStatus
+    stop_reason: StopReason
     result: str
+    result_author: AgentName | None
     agents_involved: tuple[AgentName, ...]
     trace: tuple[TraceEvent, ...]
 
@@ -59,7 +62,9 @@ class TaskResponse(BaseModel):
         """Project an internal result onto the stable transport contract."""
         return cls(
             status=result.status,
+            stop_reason=result.stop_reason,
             result=result.result,
+            result_author=result.result_author,
             agents_involved=result.agents_involved,
             trace=result.trace,
         )

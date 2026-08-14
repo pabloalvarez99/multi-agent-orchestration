@@ -7,7 +7,12 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
-from mao.evals.dataset import DEFAULT_BOUNDARY_DATASET, DEFAULT_DATASET, DatasetError
+from mao.evals.dataset import (
+    DEFAULT_BOUNDARY_DATASET,
+    DEFAULT_CHAOS_DATASET,
+    DEFAULT_DATASET,
+    DatasetError,
+)
 from mao.evals.runner import evaluate
 
 
@@ -16,6 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--boundary-dataset", type=Path, default=DEFAULT_BOUNDARY_DATASET)
+    parser.add_argument("--chaos-dataset", type=Path, default=DEFAULT_CHAOS_DATASET)
     parser.add_argument("--pretty", action="store_true")
     return parser
 
@@ -24,7 +30,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Evaluate the fake team, returning nonzero if a golden regresses."""
     arguments = build_parser().parse_args(argv)
     try:
-        report = evaluate(arguments.dataset, arguments.boundary_dataset)
+        report = evaluate(
+            arguments.dataset,
+            arguments.boundary_dataset,
+            arguments.chaos_dataset,
+        )
     except (DatasetError, OSError) as error:
         print(json.dumps({"error": str(error)}, ensure_ascii=False))
         return 2

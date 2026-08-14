@@ -1,8 +1,8 @@
 # Ship truth
 
-**Status: P3 v0.1.0 LIVE.** The
+**Status: P3 v0.2.0 LIVE.** The
 repository can be cloned, tested, and run without a key. The fake team remains the default
-for library, API, CLI, UI, and 12-task scorecard. An explicitly selected HTTP Research agent
+for library, API, CLI, UI, and 18-case scorecard. An explicitly selected HTTP Research agent
 can call P2 when `AGENTIC_RAG_URL` is configured and fails closed otherwise.
 
 **Hosted free path LIVE:** <https://pax-orchestration.vercel.app>. It runs the deterministic
@@ -36,8 +36,10 @@ curl http://127.0.0.1:8000/metrics
 | Orchestrator and global handoff/retry budgets | **LIVE (library)** | happy, retry, and exhaustion tests |
 | Writer-only final enforcement | **LIVE** | type + policy violation test; ADR-0002 |
 | Degraded specialist-failure outcomes | **LIVE** | crashing-Critic and impersonation tests; ADR-0003 |
+| Typed terminal reasons | **LIVE** | `writer_final`, `max_handoffs`, `retry_limit`, `specialist_error`, `policy_violation` |
 | Ordered JSON-safe multi-agent timeline | **LIVE** | completeness, ordering, privacy, and budget-stop tests |
 | 12-task golden evaluation | **LIVE** | three slices; [schema and limits](../data/eval/README.md) |
+| Four chaos goldens | **LIVE** | crash, reject twice, global budget, Writer impersonation; `$0`, offline |
 | HTTP-absent evaluation slice | **LIVE** | two configuration cases, zero network calls |
 | Optional P2 integration | **LIVE (opt-in)** | mocked success/error/timeout tests; ADR-0004 |
 | Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |
@@ -48,7 +50,19 @@ curl http://127.0.0.1:8000/metrics
 | Per-specialist elapsed timings | **LIVE (debug)** | injected-clock accounting test and result-page test |
 | Generated UI captures | **LIVE** | Playwright script, pinned inputs, committed SHA-256 manifest |
 | Non-root Docker + standalone Compose | **LIVE** | local build and container smoke |
-| Tagged `v0.1.0` release | **LIVE** | public release targets the exact green release commit |
+| Tagged `v0.2.0` release | **LIVE** | public release targets the exact green release commit |
+
+## Authority and stop matrix
+
+| Role | Allowed actions | Forbidden actions | Stop reasons it can surface |
+| --- | --- | --- | --- |
+| Orchestrator | validate routes, dispatch, count budgets, record trace/status | write a successful final answer, reset counters | `max_handoffs`, `retry_limit`, `specialist_error`, `policy_violation` |
+| Research | return evidence handoff to Critic | return user-facing `FinalAnswer`, route directly to Writer | `specialist_error`, `policy_violation` |
+| Critic | accept to Writer or reject to Research up to two times | answer user, exceed retry budget | `retry_limit`, `specialist_error`, `policy_violation` |
+| Writer | return the sole successful user-facing `FinalAnswer` | hand off, change budgets or status | `writer_final`, `specialist_error` |
+
+Non-done responses carry a system-owned typed stop explanation (`result_author=null`), never
+an intermediate specialist memo presented as an answer.
 
 ## Generated UI evidence
 
@@ -93,13 +107,14 @@ the fake team and does not claim hosted-model quality.
 - UI traces download as JSON attachments, and specialist timings remain debug-only;
 - retained runs expose schema 1 metadata and events until process recycle or FIFO eviction;
 - all 12 committed golden tasks meet their routing/accounting expectations;
-- ruff, strict mypy, unit tests, and both eval slices run on Python 3.12; and
+- all four chaos goldens preserve non-empty terminal output and declared ownership;
+- ruff, strict mypy, unit tests, and all routing/boundary/chaos evals run on Python 3.12; and
 - the current free path does not need an OpenAI key.
 
 It does not prove answer quality, remote-process isolation, live P2 availability, or
 multi-model collaboration. HTTP tests prove the boundary contract, not quality uplift.
 
-## Non-goals for v0.1.0
+## Non-goals for v0.2.0
 
 - No claim that several agents outperform one.
 - No hosted model default, durable shared memory, or arbitrary tools.

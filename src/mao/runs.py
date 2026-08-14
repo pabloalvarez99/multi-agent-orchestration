@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from mao.models import (
     TRACE_SCHEMA_VERSION,
     AgentName,
+    StopReason,
     TaskBudget,
     TaskResult,
     TaskStatus,
@@ -29,7 +30,9 @@ class RunRecord(BaseModel):
     task_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     seed: int = Field(ge=0)
     status: TaskStatus
+    stop_reason: StopReason
     result: str
+    result_author: AgentName | None
     agents_involved: tuple[AgentName, ...]
     handoffs_used: int = Field(ge=0)
     research_retries: int = Field(ge=0, le=2)
@@ -50,7 +53,9 @@ class RunRecord(BaseModel):
             task_sha256=hashlib.sha256(task.encode("utf-8")).hexdigest(),
             seed=seed,
             status=result.status,
+            stop_reason=result.stop_reason,
             result=result.result,
+            result_author=result.result_author,
             agents_involved=result.agents_involved,
             handoffs_used=result.handoffs_used,
             research_retries=result.research_retries,

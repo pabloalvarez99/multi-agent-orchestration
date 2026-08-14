@@ -23,6 +23,10 @@ messages over an in-memory bus. The orchestrator validates each edge, owns count
 terminal status, and appends JSON-safe events without copying the full task into the trace.
 The result is reproducible for CI and inspectable in the browser console.
 
+The public free path now runs at <https://pax-orchestration.vercel.app>. Its serverless
+process retains only the last 128 runs, so a recycle or another instance can make a replay
+lookup return `404`. That is exposed as a boundary, not disguised as persistence.
+
 ## Decision 1 — only Writer may produce a final answer
 
 **Options considered:** allow any specialist to return text; let the orchestrator compose a
@@ -82,26 +86,57 @@ stores a compact dependency pointer—not P2's raw task or nested trace. This pr
 ownership (`P3 → P2`) and prevents a silent fake fallback from misrepresenting which evidence
 path ran. See [ADR-0004](adr/0004-optional-p2-boundary.md).
 
+## Decision 5 — replay time is logical, storage is bounded
+
+**Options considered:** wall-clock timestamps in every event; sequence numbers only; or a
+versioned envelope with logical offsets and a process-local retention window.
+
+Wall time makes identical fake runs differ for reasons unrelated to policy. Sequence alone is
+deterministic but leaves no explicit replay clock or schema evolution point. Trace schema 1
+therefore records `ts_offset_ms` as a logical offset from run start and keeps operational
+latency in a separate debug field. Same task + seed yields an exactly equal event sequence.
+
+`GET /v1/runs/{id}` and `/trace` retain the last 128 completed runs in a locked FIFO. The
+record stores a task fingerprint, terminal output, accounting, ownership, and typed stop;
+the versioned endpoint stores events. There is intentionally no disk, replication, retention
+SLA, or cross-instance lookup. [ADR-0005](adr/0005-versioned-process-local-traces.md) makes the
+trade-off explicit.
+
+## Isolation as a product contract
+
+The free scorecard now runs four committed chaos cases. A crashing Critic returns a non-empty
+`degraded` result with `specialist_error`; two consecutive Critic rejections consume both
+allowed retries and still reach Writer on handoff seven; a narrow global budget stops with
+typed `max_handoffs`; and a Research attempt to return `FinalAnswer` stops as
+`policy_violation`. These cases test authority and availability semantics, not prose quality.
+
+Successful answers are always `result_author="writer"`. Degraded and exhausted outcomes are
+system explanations with `result_author=null`, so the UI does not label an orchestrator error
+or an intermediate memo as Writer output.
+
 ## Evidence and limits
 
 - `pytest` covers Writer ownership, retry and global budgets, specialist crashes, P2 success,
   HTTP error, timeout, missing capability, UI states, and capture integrity without sockets.
-- Twelve golden tasks measure routing and accounting; two boundary cases prove fake selection
-  and the HTTP-absent contract with `network_calls=0` and `billed_usd=0.0`.
-- CI runs Ruff, strict mypy, pytest, and both eval slices with provider configuration empty.
+- Twelve routing goldens, two boundary cases, and four chaos goldens run with
+  `network_calls=0` and `billed_usd=0.0`.
+- CI runs Ruff, strict mypy, pytest, and routing/boundary/chaos evals with provider
+  configuration empty.
 - The UI capture script starts the real app on localhost and submits the same fake form a
   reviewer uses; it normalizes only the displayed request ID and records PNG SHA-256 values.
+- The Replay panel and all four committed captures are generated twice with byte-identical
+  manifests; trace lookups declare schema 1 and typed 404 expiry.
 - Live P2 availability is opt-in. Remote-process isolation, hosted-model quality, and a claim
-  that specialists outperform a single model remain outside v0.1.0.
+  that specialists outperform a single model remain outside v0.2.0.
 
 ## Interview version
 
-I built P3 to show that multi-agent engineering is mostly policy, not extra personas. Research,
-Critic, and Writer exchange typed messages, but the orchestrator alone owns routing and two
-independent limits: a global handoff budget and a bounded Critic-to-Research retry budget. Only
-Writer can construct the user-facing final value, and a crash becomes an auditable degraded
-result instead of an empty success. Research can optionally call my P2 service, but that
-boundary is explicit and fail-closed—missing configuration is a typed 409, dependency failures
-stop before Writer, and the deterministic fake team remains the offline `$0` default. The UI
-then exposes the actual ordered trace so those claims can be inspected rather than inferred
-from a diagram.
+I built P3 as a policy engine whose claims can be replayed. Research, Critic, and Writer cross
+typed message boundaries, while the orchestrator alone owns routing, a global handoff budget,
+and the two-retry Critic loop. Successful text is always Writer-authored; system stops carry a
+separate typed reason and never promote an intermediate memo. Schema-1 traces use logical
+offsets, so same task + seed is exactly comparable, and the last 128 runs are inspectable with
+an explicit serverless-retention caveat. Four `$0` chaos goldens prove that a Critic crash is
+non-empty degraded output, two rejections still reach Writer, max handoffs is a typed stop, and
+Writer impersonation fails closed. That is an auditability and isolation story, not a claim
+about model quality.

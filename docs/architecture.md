@@ -1,10 +1,10 @@
 # Architecture — bounded specialist coordination
 
-Status: **P3 v0.1.0 LIVE (M1–M6).** Integrated `main`
+Status: **P3 v0.2.0 LIVE.** Integrated `main`
 contains immutable message/result models, deterministic Research/Critic/Writer specialists,
 an in-memory bus, explicit transition policy, global handoff and Critic-retry budgets,
 Writer-only final enforcement, typed degraded/budget-exhausted results, an ordered JSON-safe
-timeline, `POST /v1/tasks`, a JSON CLI, trace UI, a 12-task offline scorecard, two
+timeline, `POST /v1/tasks`, a JSON CLI, trace UI, an 18-case offline scorecard, two
 configuration-boundary cases, an optional P2 HTTP Research agent, request IDs, and a non-root
 container. There is no hosted model default or remote-process isolation.
 
@@ -105,6 +105,11 @@ any route whose next edge exceeds max_handoffs -> stop      global limit
 
 ## Writer-only final output
 
+Successful user-facing text carries `result_author="writer"`. Non-done outcomes carry a
+system-owned typed explanation with `result_author=null`; Research or Critic memos are never
+promoted to answers. Terminal reasons are the closed set `writer_final`, `max_handoffs`,
+`retry_limit`, `specialist_error`, and `policy_violation`.
+
 Only a value authored by Writer may inhabit the final-answer variant. Enforce this with a
 discriminated union whose final author is the literal `writer`, then validate the same rule
 at the orchestrator boundary. Research and Critic return handoffs, never strings that the API
@@ -195,6 +200,7 @@ planner, raw trace, or P1's retrieval stack. See [ADR-0004](adr/0004-optional-p2
 | M4 | `POST /v1/tasks`, JSON CLI, 12 offline goldens and behavioral scorecard | **LIVE** |
 | M5 | Optional P2 HTTP Research boundary | **LIVE (opt-in)** |
 | M6 | UI, strict CI, container, docs, and v0.1.0 release | **LIVE** |
+| v0.2 | Hosted free path, schema-1 replay, typed stops, four chaos goldens | **LIVE** |
 
 The [SHIP page](SHIP.md) is the operational truth if code lands while this target design is
 being implemented.

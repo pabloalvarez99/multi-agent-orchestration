@@ -4,7 +4,19 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from mao.main import app
+from mao.api import TaskRequest
+from mao.main import app, create_app
+from mao.models import AgentMessage, AgentName, HandoffMessage, TaskResult
+from mao.orchestrator import InMemoryBus, Orchestrator
+
+
+class CrashingCritic:
+    """API-level fault injection for the degraded 200 contract."""
+
+    name = AgentName.CRITIC
+
+    def handle(self, message: HandoffMessage) -> AgentMessage:
+        raise RuntimeError("critic unavailable in API chaos")
 
 client = TestClient(app)
 
@@ -17,9 +29,19 @@ def test_default_task_returns_the_exact_public_shape() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert set(body) == {"trace_schema", "status", "result", "agents_involved", "trace"}
+    assert set(body) == {
+        "trace_schema",
+        "status",
+        "stop_reason",
+        "result",
+        "result_author",
+        "agents_involved",
+        "trace",
+    }
     assert body["trace_schema"] == 1
     assert body["status"] == "done"
+    assert body["stop_reason"] == "writer_final"
+    assert body["result_author"] == "writer"
     assert body["agents_involved"] == ["orchestrator", "research", "critic", "writer"]
     assert body["trace"][-1]["event"] == "stop"
 
@@ -62,7 +84,30 @@ def test_request_budget_controls_the_global_handoff_limit() -> None:
 
     assert response.status_code == 200
     assert response.json()["status"] == "budget_exhausted"
+    assert response.json()["stop_reason"] == "max_handoffs"
+    assert response.json()["result_author"] is None
     assert "max_handoffs" in response.json()["result"]
+
+
+def test_specialist_crash_is_a_non_empty_degraded_http_200() -> None:
+    from mao.agents import FakeResearchAgent, FakeWriterAgent
+
+    orchestrator = Orchestrator(
+        bus=InMemoryBus([FakeResearchAgent(), CrashingCritic(), FakeWriterAgent()])
+    )
+
+    def crashing_runner(request: TaskRequest) -> TaskResult:
+        return orchestrator.run(request.task, budget=request.budget.to_domain())
+
+    response = TestClient(create_app(runner=crashing_runner)).post(
+        "/v1/tasks", json={"task": "Exercise degraded isolation"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "degraded"
+    assert response.json()["stop_reason"] == "specialist_error"
+    assert response.json()["result"].strip()
+    assert response.json()["result_author"] is None
 
 
 def test_unknown_request_fields_are_rejected() -> None:

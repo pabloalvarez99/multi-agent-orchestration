@@ -12,6 +12,7 @@ from mao.models import (
     AgentName,
     FinalAnswer,
     HandoffMessage,
+    StopReason,
     TaskBudget,
     TaskResult,
     TaskStatus,
@@ -90,7 +91,9 @@ class Orchestrator:
                 )
                 return self._result(
                     TaskStatus.BUDGET_EXHAUSTED,
+                    StopReason.MAX_HANDOFFS,
                     "The task stopped before Writer could finish because max_handoffs was reached.",
+                    None,
                     involved,
                     handoffs,
                     retries,
@@ -138,7 +141,9 @@ class Orchestrator:
                     )
                     return self._result(
                         TaskStatus.DONE,
+                        StopReason.WRITER_FINAL,
                         output.text,
+                        AgentName.WRITER,
                         involved,
                         handoffs,
                         retries,
@@ -179,6 +184,15 @@ class Orchestrator:
                     if isinstance(error, PolicyError) and "limit exhausted" in str(error)
                     else TaskStatus.DEGRADED
                 )
+                stop_reason = (
+                    StopReason.RETRY_LIMIT
+                    if status is TaskStatus.BUDGET_EXHAUSTED
+                    else (
+                        StopReason.POLICY_VIOLATION
+                        if isinstance(error, PolicyError)
+                        else StopReason.SPECIALIST_ERROR
+                    )
+                )
                 self._record(
                     trace,
                     "specialist_error",
@@ -197,11 +211,7 @@ class Orchestrator:
                     AgentName.ORCHESTRATOR,
                     {
                         "action": "stop",
-                        "reason": (
-                            "retry_limit"
-                            if status is TaskStatus.BUDGET_EXHAUSTED
-                            else "error"
-                        ),
+                        "reason": stop_reason.value,
                         "status": status.value,
                     },
                 )
@@ -211,7 +221,9 @@ class Orchestrator:
                 )
                 return self._result(
                     status,
+                    stop_reason,
                     explanation,
+                    None,
                     involved,
                     handoffs,
                     retries,
@@ -241,7 +253,9 @@ class Orchestrator:
     @staticmethod
     def _result(
         status: TaskStatus,
+        stop_reason: StopReason,
         result: str,
+        result_author: AgentName | None,
         involved: Iterable[AgentName],
         handoffs: int,
         retries: int,
@@ -256,13 +270,16 @@ class Orchestrator:
             AgentName.ORCHESTRATOR,
             {
                 "status": status.value,
+                "stop_reason": stop_reason.value,
                 "handoffs_used": handoffs,
                 "research_retries": retries,
             },
         )
         return TaskResult(
             status=status,
+            stop_reason=stop_reason,
             result=result,
+            result_author=result_author,
             agents_involved=tuple(involved),
             handoffs_used=handoffs,
             research_retries=retries,

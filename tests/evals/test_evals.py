@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from mao.evals import evaluate, load_boundary_dataset, load_dataset
+from mao.evals import evaluate, load_boundary_dataset, load_chaos_dataset, load_dataset
 from mao.evals.run import main
 
 
@@ -31,6 +31,19 @@ def test_all_goldens_pass_for_zero_billed_cost() -> None:
         "capability_missing",
     ]
     assert all(result.network_calls == 0 for result in report.boundary_results)
+    assert len(report.chaos_results) == 4
+    assert all(result.passed and result.non_empty_result for result in report.chaos_results)
+
+
+def test_chaos_dataset_covers_isolation_product_contracts() -> None:
+    cases = load_chaos_dataset()
+
+    assert {case.scenario for case in cases} == {
+        "specialist_crash",
+        "critic_reject_twice",
+        "max_handoffs",
+        "writer_impersonation",
+    }
 
 
 def test_boundary_dataset_covers_default_and_missing_capability() -> None:

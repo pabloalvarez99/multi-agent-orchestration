@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from mao.models import AgentName, TaskStatus
+from mao.models import AgentName, StopReason, TaskStatus
 
 
 class GoldenTask(BaseModel):
@@ -60,6 +60,41 @@ class BoundaryResult(BaseModel):
     passed: bool
 
 
+class ChaosGolden(BaseModel):
+    """One deterministic fault-injection expectation."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str = Field(min_length=1)
+    scenario: Literal[
+        "specialist_crash",
+        "critic_reject_twice",
+        "max_handoffs",
+        "writer_impersonation",
+    ]
+    task: str = Field(min_length=1, max_length=8_000)
+    max_handoffs: int = Field(ge=1, le=64)
+    expected_status: TaskStatus
+    expected_stop_reason: StopReason
+    expected_writer_finished: bool
+
+
+class ChaosResult(BaseModel):
+    """Observed chaos outcome and invariant verdict."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str
+    status: TaskStatus
+    stop_reason: StopReason
+    writer_finished: bool
+    non_empty_result: bool
+    handoffs_used: int = Field(ge=0)
+    research_retries: int = Field(ge=0, le=2)
+    passed: bool
+    failures: tuple[str, ...] = ()
+
+
 class EvalMetrics(BaseModel):
     """Aggregate routing behavior across the committed scenarios."""
 
@@ -83,9 +118,11 @@ class EvalReport(BaseModel):
     billed_usd: float = Field(default=0.0, ge=0.0)
     dataset: str
     boundary_dataset: str
+    chaos_dataset: str
     metrics: EvalMetrics
     results: tuple[GoldenResult, ...]
     boundary_results: tuple[BoundaryResult, ...]
+    chaos_results: tuple[ChaosResult, ...]
 
     @property
     def all_passed(self) -> bool:
@@ -95,4 +132,6 @@ class EvalReport(BaseModel):
             and self.metrics.passed_tasks == self.metrics.total_tasks
             and bool(self.boundary_results)
             and all(result.passed for result in self.boundary_results)
+            and bool(self.chaos_results)
+            and all(result.passed for result in self.chaos_results)
         )

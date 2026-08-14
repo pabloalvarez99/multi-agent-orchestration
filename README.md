@@ -14,8 +14,8 @@ Project 3 in a five-system [AI Engineering portfolio](https://github.com/pabloal
 deterministic Research, Critic, and Writer specialists coordinated under explicit handoff and
 retry budgets, with Writer-only final output and typed degraded outcomes.
 
-> **v0.1.0 LIVE.** The fake team remains the default for the
-> library, API, CLI, browser console, and 12-task scorecard. Research can optionally cross the
+> **v0.2.0 LIVE.** The fake team remains the default for the
+> library, API, CLI, browser console, and 18-case offline scorecard. Research can optionally cross the
 > public P2 HTTP boundary when `AGENTIC_RAG_URL` is explicitly configured. No model key is
 > required and the default path makes no network call.
 
@@ -144,12 +144,12 @@ python -m mao.evals.run
 | JSON API, CLI, accessible UI, request IDs, ordered trace | **LIVE** |
 | Versioned trace replay + bounded last-128 run lookup | **LIVE (process-local)** |
 | Optional P2 HTTP Research, fail-closed to `degraded` | **LIVE (opt-in)** |
-| 12 fake goldens + two no-network boundary cases, billed `$0` | **LIVE** |
+| 12 routing goldens + 2 boundary + 4 chaos cases, billed `$0` | **LIVE** |
 | Ruff + mypy + pytest + evals in empty-key CI | **LIVE** |
 | Non-root Docker image and standalone Compose | **LIVE** |
 | Hosted credential-free console and API | **LIVE** — [`pax-orchestration.vercel.app`](https://pax-orchestration.vercel.app) |
 | Hosted models, remote-process isolation, multi-agent quality uplift | **PLANNED / not claimed** |
-| Public [`v0.1.0`](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.1.0) GitHub release | **LIVE** |
+| Public [`v0.2.0`](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.2.0) GitHub release | **LIVE** |
 
 ## Portfolio series
 
@@ -158,7 +158,7 @@ python -m mao.evals.run
 2. [agentic-rag-research v0.1.0](https://github.com/pabloalvarez99/agentic-rag-research/releases/tag/v0.1.0) — bounded
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
    (**LIVE**)
-3. [**multi-agent-orchestration v0.1.0**](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.1.0) — coordination, optional P2 Research, and trace UI (**LIVE**)
+3. [**multi-agent-orchestration v0.2.0**](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.2.0) — coordination, versioned replay, chaos goldens, and trace UI (**LIVE**)
 4. [RepoMind](https://github.com/pabloalvarez99/repomind) — AST-aware code intelligence
    with grounded `path:line` answers (**M5 live; JSON CLI + 14-case fixture eval**)
 5. AI Platform — gateway and operations (**planned**)
@@ -166,7 +166,7 @@ python -m mao.evals.run
 ## Next boundary
 
 Remote specialist isolation, hosted model quality, and claims that agents beat a single model
-remain future work after v0.1.0.
+remain future work after v0.2.0.
 
 ## Documentation map
 
@@ -181,6 +181,7 @@ remain future work after v0.1.0.
 - [Case study](docs/CASESTUDY.md) — interview-ready policy decisions and trade-offs.
 - [Portfolio](docs/PORTFOLIO.md) — P1 → P5 maturity ladder.
 - [Golden task schema](data/eval/README.md) — curation, coverage, metrics, and limits.
+- [20-minute demo day](DEMO-DAY.md) — cold URL or clone through a degraded chaos run.
 
 ## License
 

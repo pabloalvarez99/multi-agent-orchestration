@@ -1,0 +1,4 @@
+{"id":"critic-crash-degrades","scenario":"specialist_crash","task":"Compare isolation outcomes","max_handoffs":8,"expected_status":"degraded","expected_stop_reason":"specialist_error","expected_writer_finished":false}
+{"id":"critic-rejects-twice-writer-finishes","scenario":"critic_reject_twice","task":"Audit retry isolation","max_handoffs":8,"expected_status":"done","expected_stop_reason":"writer_final","expected_writer_finished":true}
+{"id":"global-budget-typed-stop","scenario":"max_handoffs","task":"Compare bounded routes","max_handoffs":1,"expected_status":"budget_exhausted","expected_stop_reason":"max_handoffs","expected_writer_finished":false}
+{"id":"research-cannot-impersonate-writer","scenario":"writer_impersonation","task":"Verify writer ownership","max_handoffs":8,"expected_status":"degraded","expected_stop_reason":"policy_violation","expected_writer_finished":false}

@@ -18,13 +18,25 @@ class TaskStatus(StrEnum):
     BUDGET_EXHAUSTED = "budget_exhausted"
 
 
+class StopReason(StrEnum):
+    """Typed reason the orchestrator ended a run."""
+
+    WRITER_FINAL = "writer_final"
+    MAX_HANDOFFS = "max_handoffs"
+    RETRY_LIMIT = "retry_limit"
+    SPECIALIST_ERROR = "specialist_error"
+    POLICY_VIOLATION = "policy_violation"
+
+
 class TaskResult(BaseModel):
     """Outcome, participant set, and accounting for one task."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     status: TaskStatus
+    stop_reason: StopReason
     result: str = Field(min_length=1)
+    result_author: AgentName | None = None
     agents_involved: tuple[AgentName, ...]
     handoffs_used: int = Field(ge=0)
     research_retries: int = Field(ge=0, le=2)
@@ -43,4 +55,8 @@ class TaskResult(BaseModel):
             raise ValueError("handoffs_used exceeds max_handoffs")
         if self.research_retries > self.budget.max_research_retries:
             raise ValueError("research_retries exceeds max_research_retries")
+        if self.status is TaskStatus.DONE and self.result_author is not AgentName.WRITER:
+            raise ValueError("done results must be authored by writer")
+        if self.status is not TaskStatus.DONE and self.result_author is not None:
+            raise ValueError("non-done explanations cannot claim specialist authorship")
         return self

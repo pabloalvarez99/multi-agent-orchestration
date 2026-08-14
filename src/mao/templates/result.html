@@ -15,7 +15,8 @@
       </dl>
     </div>
     <section aria-labelledby="writer-heading">
-      <p class="section-label">Writer output</p><h3 id="writer-heading">User-facing result</h3>
+      {% if result.result_author %}<p class="section-label">Writer output</p><h3 id="writer-heading">User-facing result</h3>
+      {% else %}<p class="section-label">System outcome</p><h3 id="writer-heading">Typed stop explanation</h3>{% endif %}
       <p class="writer-result">{{ result.result }}</p>
     </section>
     <section aria-labelledby="agents-heading">

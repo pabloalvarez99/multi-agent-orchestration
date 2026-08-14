@@ -2,6 +2,7 @@
 
 `tasks.jsonl` contains 12 deterministic scenarios for the credential-free specialist team.
 `research_boundaries.jsonl` adds two configuration-only cases for the optional P2 boundary.
+`chaos.jsonl` adds four fault-injection contracts for isolation and typed stops.
 The evaluation runner executes the same `run_task()` path used by the API and CLI; it makes no
 network or provider call and reports `provider="fake"` with `billed_usd=0.0`. Boundary cases
 construct specialists but never call `handle`, and report `network_calls=0`: fake remains
@@ -23,6 +24,17 @@ expectation failed, and `2` means the dataset could not be loaded or validated.
 | `happy_path` | 6 | Research → Critic → Writer completes within three handoffs. |
 | `critic_retry` | 3 | Review terms trigger exactly one bounded Critic → Research retry. |
 | `budget_stop` | 3 | A narrow global budget stops before Writer and reports `budget_exhausted`. |
+
+## Chaos coverage
+
+| Scenario | Required invariant |
+| --- | --- |
+| `specialist_crash` | HTTP/library result is `degraded`, non-empty, and `specialist_error`. |
+| `critic_reject_twice` | Both retries are counted and Writer still finishes on handoff 7. |
+| `max_handoffs` | Terminal status is `budget_exhausted` with typed `max_handoffs`. |
+| `writer_impersonation` | Research final text is rejected as `policy_violation`. |
+
+These are deterministic fake faults. They evaluate control-plane behavior, not answer quality.
 
 The task wording is intentionally direct professional English. Retry cases retain the words
 `audit`, `validate`, or `verify` because those terms are part of the documented deterministic
