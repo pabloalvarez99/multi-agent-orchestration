@@ -99,10 +99,13 @@ def _submit(page: Page, base_url: str, spec: CaptureSpec) -> None:
 
 
 def _stabilize(page: Page) -> None:
-    """Remove the only dynamic value and disable rendering motion."""
+    """Normalize dynamic diagnostics and disable rendering motion."""
     request_id = page.locator(".diagnostics code")
     request_id.wait_for(state="visible")
     request_id.evaluate("(node, value) => { node.textContent = value; }", FIXED_REQUEST_ID)
+    timings = page.locator(".timing-value")
+    for index in range(timings.count()):
+        timings.nth(index).evaluate("node => { node.textContent = '0.100 ms'; }")
     page.add_style_tag(
         content=(
             "* { animation: none !important; transition: none !important; "

@@ -41,9 +41,15 @@ button:hover { background: #ddff98; transform: translateY(-1px); }
 .writer-result { margin: .65rem 0 0; padding: 1rem; border-left: 2px solid var(--orange); background: var(--deep); white-space: pre-wrap; }
 .agent-list { display: flex; flex-wrap: wrap; gap: .55rem; margin: .7rem 0 0; padding: 0; list-style: none; }
 .agent-list li { padding: .38rem .7rem; border: 1px solid var(--line); color: var(--lime); font: .78rem ui-monospace, monospace; text-transform: uppercase; }
+.timing-note { margin: .45rem 0 .7rem; color: var(--muted); font-size: .85rem; }
+.timing-list { display: flex; flex-wrap: wrap; gap: .55rem; margin: 0; }
+.timing-list div { min-width: 8.5rem; padding: .55rem .7rem; border: 1px solid var(--line); background: var(--deep); }
+.timing-list dt { color: var(--muted); font: .7rem ui-monospace, monospace; text-transform: uppercase; }
+.timing-list dd { margin: .15rem 0 0; color: var(--lime); font: 800 .84rem ui-monospace, monospace; }
 .trace { margin-top: 2rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
 .trace summary { cursor: pointer; font-weight: 800; }
 .trace summary span { margin-left: .5rem; color: var(--muted); font-weight: 400; }
+.download-link { display: inline-block; padding: .45rem .65rem; border: 1px solid var(--line); font: 750 .75rem ui-monospace, monospace; text-transform: uppercase; }
 .trace ol { margin: 1rem 0 0; padding: 0; list-style: none; }
 .trace li { display: grid; grid-template-columns: 2.3rem 1fr; gap: .8rem; padding-bottom: .8rem; }
 .sequence { padding-top: .7rem; color: var(--orange); font: .75rem ui-monospace, monospace; }

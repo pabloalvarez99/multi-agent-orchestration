@@ -30,6 +30,11 @@ class TaskResult(BaseModel):
     research_retries: int = Field(ge=0, le=2)
     budget: TaskBudget
     trace: tuple[TraceEvent, ...]
+    specialist_timings_ms: dict[AgentName, float] = Field(
+        default_factory=dict,
+        exclude=True,
+        repr=False,
+    )
 
     @model_validator(mode="after")
     def validate_accounting(self) -> TaskResult:

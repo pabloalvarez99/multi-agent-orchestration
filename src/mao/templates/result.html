@@ -22,8 +22,16 @@
       <p class="section-label">Participants</p><h3 id="agents-heading">Agents involved</h3>
       <ul class="agent-list">{% for agent in result.agents_involved %}<li>{{ agent.value }}</li>{% endfor %}</ul>
     </section>
+    <section aria-labelledby="timings-heading">
+      <p class="section-label">Debug timings</p><h3 id="timings-heading">Specialist time</h3>
+      <p class="timing-note">Process-local elapsed time; operational evidence, not a quality claim.</p>
+      <dl class="timing-list">{% for agent, elapsed_ms in result.specialist_timings_ms.items() %}<div>
+        <dt>{{ agent.value }}</dt><dd class="timing-value">{{ "%.3f" | format(elapsed_ms) }} ms</dd>
+      </div>{% endfor %}</dl>
+    </section>
     <details class="trace" open>
       <summary>Ordered execution trace <span>{{ result.trace | length }} events</span></summary>
+      <p><a class="download-link" href="/ui/tasks/{{ request_id }}/timeline.json" download>Download timeline JSON</a></p>
       <ol>{% for entry in result.trace %}<li>
         <span class="sequence">{{ "%02d" | format(entry.sequence) }}</span>
         <div class="event-card"><div class="event-title"><h3>{{ entry.event | replace('_', ' ') }}</h3><span>{{ entry.actor.value }}</span></div><pre>{{ entry.payload | tojson(indent=2) }}</pre></div>

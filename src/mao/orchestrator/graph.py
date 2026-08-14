@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from time import perf_counter_ns
 
 from pydantic import JsonValue
 
@@ -30,6 +31,7 @@ class Orchestrator:
         bus: InMemoryBus | None = None,
         policy: OrchestrationPolicy | None = None,
         research_agent: Agent | None = None,
+        clock_ns: Callable[[], int] = perf_counter_ns,
     ) -> None:
         """Build the default fake team or accept an injected test team."""
         if bus is not None and research_agent is not None:
@@ -43,6 +45,7 @@ class Orchestrator:
             else str(getattr(research_agent or FakeResearchAgent(), "provider", "custom"))
         )
         self._policy = policy or OrchestrationPolicy()
+        self._clock_ns = clock_ns
 
     def run(self, task: str, *, budget: TaskBudget | None = None) -> TaskResult:
         """Execute ``task`` until Writer finishes, a budget ends, or a specialist fails."""
@@ -57,6 +60,7 @@ class Orchestrator:
         handoffs = 0
         retries = 0
         trace: list[TraceEvent] = []
+        specialist_timings_ns: dict[AgentName, int] = {}
         self._record(
             trace,
             "task_started",
@@ -85,6 +89,7 @@ class Orchestrator:
                     retries,
                     limits,
                     trace,
+                    specialist_timings_ns,
                 )
             try:
                 self._policy.validate_handoff(current)
@@ -101,7 +106,14 @@ class Orchestrator:
                         "handoff_number": handoffs + 1,
                     },
                 )
-                output = self._bus.dispatch(current)
+                started_ns = self._clock_ns()
+                try:
+                    output = self._bus.dispatch(current)
+                finally:
+                    elapsed_ns = max(0, self._clock_ns() - started_ns)
+                    specialist_timings_ns[dispatched] = (
+                        specialist_timings_ns.get(dispatched, 0) + elapsed_ns
+                    )
                 handoffs += 1
                 if isinstance(output, FinalAnswer):
                     self._record(
@@ -125,6 +137,7 @@ class Orchestrator:
                         retries,
                         limits,
                         trace,
+                        specialist_timings_ns,
                     )
                 self._record(
                     trace,
@@ -197,6 +210,7 @@ class Orchestrator:
                     retries,
                     limits,
                     trace,
+                    specialist_timings_ns,
                 )
 
     @staticmethod
@@ -220,6 +234,7 @@ class Orchestrator:
         retries: int,
         budget: TaskBudget,
         trace: list[TraceEvent],
+        specialist_timings_ns: dict[AgentName, int],
     ) -> TaskResult:
         """Construct one terminal result with stable participant ordering."""
         Orchestrator._record(
@@ -240,6 +255,10 @@ class Orchestrator:
             research_retries=retries,
             budget=budget,
             trace=tuple(trace),
+            specialist_timings_ms={
+                agent: round(elapsed_ns / 1_000_000, 3)
+                for agent, elapsed_ns in specialist_timings_ns.items()
+            },
         )
 
 

@@ -54,6 +54,21 @@ def test_happy_path_finishes_only_after_writer() -> None:
     assert result.result.endswith("composed by the Writer specialist.")
 
 
+def test_specialist_timings_use_an_injected_monotonic_clock_and_stay_internal() -> None:
+    ticks = iter([0, 1_500_000, 10_000_000, 12_000_000, 20_000_000, 23_250_000])
+
+    result = Orchestrator(clock_ns=ticks.__next__).run(
+        "Compare hybrid vs dense retrieval"
+    )
+
+    assert result.specialist_timings_ms == {
+        AgentName.RESEARCH: 1.5,
+        AgentName.CRITIC: 2.0,
+        AgentName.WRITER: 3.25,
+    }
+    assert "specialist_timings_ms" not in result.model_dump()
+
+
 def test_critic_rejection_causes_one_bounded_research_retry() -> None:
     result = run_task("Audit retrieval risk")
 

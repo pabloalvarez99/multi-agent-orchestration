@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 import logging
+from collections import OrderedDict
 from http import HTTPStatus
 from pathlib import Path
+from threading import Lock
 from typing import Annotated, Final
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 
 from mao.api import TaskRequest, TaskRunner
 from mao.middleware import request_id_of
+from mao.models import TraceEvent
 
 PACKAGE_DIRECTORY: Final = Path(__file__).resolve().parent
 TEMPLATE_DIRECTORY: Final = PACKAGE_DIRECTORY / "templates"
@@ -22,6 +25,29 @@ DEMO_TASK: Final = "Compare hybrid vs dense retrieval in one paragraph"
 
 LOGGER: Final = logging.getLogger(__name__)
 templates = Jinja2Templates(directory=TEMPLATE_DIRECTORY)
+
+
+class TimelineStore:
+    """Keep a bounded process-local set of downloadable UI traces."""
+
+    def __init__(self, *, max_entries: int = 128) -> None:
+        """Create a store that evicts the oldest completed run first."""
+        self._max_entries = max_entries
+        self._items: OrderedDict[str, tuple[TraceEvent, ...]] = OrderedDict()
+        self._lock = Lock()
+
+    def put(self, request_id: str, trace: tuple[TraceEvent, ...]) -> None:
+        """Save one immutable trace and enforce the entry bound."""
+        with self._lock:
+            self._items[request_id] = trace
+            self._items.move_to_end(request_id)
+            while len(self._items) > self._max_entries:
+                self._items.popitem(last=False)
+
+    def get(self, request_id: str) -> tuple[TraceEvent, ...] | None:
+        """Return one trace without extending its retention lifetime."""
+        with self._lock:
+            return self._items.get(request_id)
 
 
 def _context(request: Request, **extra: object) -> dict[str, object]:
@@ -36,6 +62,7 @@ def _context(request: Request, **extra: object) -> dict[str, object]:
 def build_ui_router(runner: TaskRunner) -> APIRouter:
     """Build UI routes over the same injected runner as the JSON API."""
     router = APIRouter(include_in_schema=False)
+    timelines = TimelineStore()
 
     @router.get("/", response_class=HTMLResponse)
     def task_console(request: Request) -> Response:
@@ -101,6 +128,7 @@ def build_ui_router(runner: TaskRunner) -> APIRouter:
                 status_code=int(HTTPStatus.INTERNAL_SERVER_ERROR),
             )
 
+        timelines.put(request_id, result.trace)
         return templates.TemplateResponse(
             request=request,
             name="result.html",
@@ -113,7 +141,23 @@ def build_ui_router(runner: TaskRunner) -> APIRouter:
             ),
         )
 
+    @router.get("/ui/tasks/{request_id}/timeline.json")
+    def download_timeline(request_id: str) -> Response:
+        """Download the exact JSON-safe trace retained for one UI run."""
+        trace = timelines.get(request_id)
+        if trace is None:
+            return JSONResponse(
+                status_code=int(HTTPStatus.NOT_FOUND),
+                content={"error": "timeline_not_found"},
+            )
+        return JSONResponse(
+            content=[event.model_dump(mode="json") for event in trace],
+            headers={
+                "Content-Disposition": f'attachment; filename="timeline-{request_id}.json"'
+            },
+        )
+
     return router
 
 
-__all__ = ["STATIC_DIRECTORY", "build_ui_router"]
+__all__ = ["STATIC_DIRECTORY", "TimelineStore", "build_ui_router"]
