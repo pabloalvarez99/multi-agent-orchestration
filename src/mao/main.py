@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from mao.agents import ResearchCapabilityMissing
 from mao.api import (
@@ -15,6 +16,7 @@ from mao.api import (
     execute_task_request,
 )
 from mao.middleware import RequestIdMiddleware, request_id_of
+from mao.ui import STATIC_DIRECTORY, build_ui_router
 
 
 def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
@@ -28,6 +30,7 @@ def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
         version="0.1.0",
     )
     application.add_middleware(RequestIdMiddleware)
+    application.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
     @application.exception_handler(ResearchCapabilityMissing)
     async def capability_missing(
@@ -56,6 +59,8 @@ def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
         """Run one task under its global handoff budget."""
         result = runner(request)
         return TaskResponse.from_result(result)
+
+    application.include_router(build_ui_router(runner))
 
     return application
 

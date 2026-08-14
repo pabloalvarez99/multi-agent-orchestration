@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Task result · Specialist Console{% endblock %}
+{% block content %}
+  <header class="hero compact">
+    <p class="kicker">Execution complete</p><h1>Answer above.<br><em>Proof below.</em></h1>
+  </header>
+  {% include "_form.html" %}
+  <article class="outcome outcome-{{ result.status.value }}" aria-labelledby="outcome-heading">
+    <div class="outcome-head">
+      <div><p class="kicker">Terminal state</p><h2 id="outcome-heading">{{ result.status.value | replace('_', ' ') | title }}</h2></div>
+      <dl class="stats">
+        <div><dt>Handoffs</dt><dd>{{ result.handoffs_used }}</dd></div>
+        <div><dt>Retries</dt><dd>{{ result.research_retries }}</dd></div>
+        <div><dt>Events</dt><dd>{{ result.trace | length }}</dd></div>
+      </dl>
+    </div>
+    <section aria-labelledby="writer-heading">
+      <p class="section-label">Writer output</p><h3 id="writer-heading">User-facing result</h3>
+      <p class="writer-result">{{ result.result }}</p>
+    </section>
+    <section aria-labelledby="agents-heading">
+      <p class="section-label">Participants</p><h3 id="agents-heading">Agents involved</h3>
+      <ul class="agent-list">{% for agent in result.agents_involved %}<li>{{ agent.value }}</li>{% endfor %}</ul>
+    </section>
+    <details class="trace" open>
+      <summary>Ordered execution trace <span>{{ result.trace | length }} events</span></summary>
+      <ol>{% for entry in result.trace %}<li>
+        <span class="sequence">{{ "%02d" | format(entry.sequence) }}</span>
+        <div class="event-card"><div class="event-title"><h3>{{ entry.event | replace('_', ' ') }}</h3><span>{{ entry.actor.value }}</span></div><pre>{{ entry.payload | tojson(indent=2) }}</pre></div>
+      </li>{% endfor %}</ol>
+    </details>
+    <footer class="diagnostics"><span>Request ID</span><code>{{ request_id }}</code><span class="mode">Deterministic / local</span></footer>
+  </article>
+{% endblock %}

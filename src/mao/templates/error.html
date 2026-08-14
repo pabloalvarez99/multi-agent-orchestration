@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Task error · Specialist Console{% endblock %}
+{% block content %}
+  <header class="hero compact"><p class="kicker error-label">Request stopped</p><h1>The boundary<br><em>held.</em></h1></header>
+  {% include "_form.html" %}
+  <article class="outcome outcome-error" role="alert" aria-labelledby="error-heading">
+    <p class="kicker error-label">{{ error_type }}</p><h2 id="error-heading">The task was not dispatched</h2>
+    <p class="writer-result">{{ error }}</p>
+    <footer class="diagnostics"><span>Request ID</span><code>{{ request_id }}</code></footer>
+  </article>
+{% endblock %}

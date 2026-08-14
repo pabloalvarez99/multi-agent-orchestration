@@ -1,0 +1,18 @@
+<section class="console" aria-labelledby="console-heading">
+  <div class="panel-heading">
+    <div><p class="kicker">Control surface</p><h2 id="console-heading">Dispatch a bounded task</h2></div>
+    <span class="mode">Fake team · $0</span>
+  </div>
+  <form action="/ui/tasks" method="post">
+    <label for="task">Task</label>
+    <textarea id="task" name="task" rows="4" minlength="1" maxlength="8000" required>{{ task }}</textarea>
+    <div class="budget-row">
+      <div>
+        <label for="max_handoffs">Maximum handoffs</label>
+        <input id="max_handoffs" name="max_handoffs" type="number" min="1" max="64" value="{{ selected_max_handoffs }}" required>
+      </div>
+      <p>Research → Critic → Writer. Critic may return work to Research, but budgets always win.</p>
+    </div>
+    <button type="submit">Run specialist team <span aria-hidden="true">→</span></button>
+  </form>
+</section>
