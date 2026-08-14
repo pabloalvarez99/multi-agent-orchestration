@@ -11,6 +11,9 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ""
+      AGENTIC_RAG_URL: ""
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -19,6 +22,6 @@ jobs:
           cache: pip
       - run: pip install -e ".[dev]"
       - run: ruff check .
+      - run: mypy src/mao
       - run: pytest -q
-        env:
-          OPENAI_API_KEY: ""
+      - run: python -m mao.evals.run
