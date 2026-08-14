@@ -1,10 +1,9 @@
 # Ship truth
 
-**Status: P3-M5 and the v0.1.0 runtime surface are LIVE; public release pending.** The
+**Status: P3 v0.1.0 LIVE.** The
 repository can be cloned, tested, and run without a key. The fake team remains the default
 for library, API, CLI, UI, and 12-task scorecard. An explicitly selected HTTP Research agent
-can call P2 when `AGENTIC_RAG_URL` is configured and fails closed otherwise. The public tag is
-not claimed until the release SHA passes CI.
+can call P2 when `AGENTIC_RAG_URL` is configured and fails closed otherwise.
 
 ## Try the free path
 
@@ -35,7 +34,7 @@ curl http://127.0.0.1:8000/health
 | Optional P2 integration | **LIVE (opt-in)** | mocked success/error/timeout tests; ADR-0004 |
 | Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |
 | Non-root Docker + standalone Compose | **LIVE** | local build and container smoke |
-| Tagged release | **PENDING** | tag only after the exact release SHA is green |
+| Tagged `v0.1.0` release | **LIVE** | public release targets the exact green release commit |
 
 ## What CI proves today
 
@@ -62,6 +61,6 @@ multi-model collaboration. HTTP tests prove the boundary contract, not quality u
 
 ## Release gate
 
-The implementation gates are complete. The remaining release gate is mechanical: prepare a
-release commit, prove its exact SHA green in CI, create `v0.1.0` at that SHA, and publish notes
-that separate LIVE capability from PLANNED claims.
+The release was prepared only after the implementation gates completed. The tag targets the
+exact release commit whose CI ran ruff, strict mypy, pytest, and both free-path eval slices.
+Release notes separate LIVE capability from PLANNED claims.

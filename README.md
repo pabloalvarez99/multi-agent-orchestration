@@ -6,11 +6,10 @@ Project 3 in a five-system [AI Engineering portfolio](https://github.com/pabloal
 deterministic Research, Critic, and Writer specialists coordinated under explicit handoff and
 retry budgets, with Writer-only final output and typed degraded outcomes.
 
-> **M5 and the v0.1.0 runtime surface are LIVE.** The fake team remains the default for the
+> **v0.1.0 LIVE.** The fake team remains the default for the
 > library, API, CLI, browser console, and 12-task scorecard. Research can optionally cross the
 > public P2 HTTP boundary when `AGENTIC_RAG_URL` is explicitly configured. No model key is
-> required and the default path makes no network call. The public tag remains pending until
-> the release commit has green CI.
+> required and the default path makes no network call.
 
 The [architecture](docs/architecture.md) and four accepted ADRs make the intended
 authority, Writer-only final rule, budgets, and degraded mode implemented through M2, plus
@@ -104,7 +103,7 @@ python -m mao.evals.run
 | Ruff + mypy + pytest + evals in empty-key CI | **LIVE** |
 | Non-root Docker image and standalone Compose | **LIVE** |
 | Hosted models, remote-process isolation, multi-agent quality uplift | **PLANNED / not claimed** |
-| Public `v0.1.0` GitHub tag and release | **PENDING green release SHA** |
+| Public [`v0.1.0`](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.1.0) GitHub release | **LIVE** |
 
 ## Portfolio series
 
@@ -113,17 +112,15 @@ python -m mao.evals.run
 2. [agentic-rag-research v0.1.0](https://github.com/pabloalvarez99/agentic-rag-research/releases/tag/v0.1.0) — bounded
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
    (**LIVE**)
-3. **multi-agent-orchestration** — coordination, optional P2 Research, and trace UI
-   (**M5 LIVE; v0.1.0 release candidate**)
+3. [**multi-agent-orchestration v0.1.0**](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.1.0) — coordination, optional P2 Research, and trace UI (**LIVE**)
 4. [RepoMind](https://github.com/pabloalvarez99/repomind) — AST-aware code intelligence
    with grounded `path:line` answers (**M5 live; JSON CLI + 14-case fixture eval**)
 5. AI Platform — gateway and operations (**planned**)
 
 ## Next boundary
 
-The remaining M6 action is the public `v0.1.0` tag and GitHub release on an exact green SHA.
 Remote specialist isolation, hosted model quality, and claims that agents beat a single model
-remain future work.
+remain future work after v0.1.0.
 
 ## Documentation map
 

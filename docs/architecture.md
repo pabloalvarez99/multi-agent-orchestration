@@ -1,12 +1,12 @@
 # Architecture — bounded specialist coordination
 
-Status: **P3-M5 LIVE; M6 public release pending.** Integrated `main`
+Status: **P3 v0.1.0 LIVE (M1–M6).** Integrated `main`
 contains immutable message/result models, deterministic Research/Critic/Writer specialists,
 an in-memory bus, explicit transition policy, global handoff and Critic-retry budgets,
 Writer-only final enforcement, typed degraded/budget-exhausted results, an ordered JSON-safe
 timeline, `POST /v1/tasks`, a JSON CLI, trace UI, a 12-task offline scorecard, two
 configuration-boundary cases, an optional P2 HTTP Research agent, request IDs, and a non-root
-container. There is no hosted model default, remote-process isolation, or public release yet.
+container. There is no hosted model default or remote-process isolation.
 
 The system exists to answer one question: how can several specialists cooperate without
 turning role prompts into an unbounded, unauditable conversation?
@@ -189,7 +189,7 @@ planner, raw trace, or P1's retrieval stack. See [ADR-0004](adr/0004-optional-p2
 | M3 | Deterministic multi-agent timeline | **LIVE** |
 | M4 | `POST /v1/tasks`, JSON CLI, 12 offline goldens and behavioral scorecard | **LIVE** |
 | M5 | Optional P2 HTTP Research boundary | **LIVE (opt-in)** |
-| M6 | UI, strict CI, container, docs, and v0.1.0 release | **PARTIAL — public tag/release pending** |
+| M6 | UI, strict CI, container, docs, and v0.1.0 release | **LIVE** |
 
 The [SHIP page](SHIP.md) is the operational truth if code lands while this target design is
 being implemented.
