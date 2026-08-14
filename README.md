@@ -6,12 +6,14 @@ Project 3 in a five-system [AI Engineering portfolio](https://github.com/pabloal
 deterministic Research, Critic, and Writer specialists coordinated under explicit handoff and
 retry budgets, with Writer-only final output and typed degraded outcomes.
 
-> **M2 library LIVE; HTTP remains health-only.** `run_task()` executes the bounded in-process
-> fake team. The FastAPI app still exposes only `GET /health`; no task endpoint, timeline,
-> golden evaluation, model call, or remote specialist is claimed.
+> **M4 LIVE on the deterministic free path.** `run_task()`, `POST /v1/tasks`, and the JSON CLI
+> execute the bounded in-process fake team with an ordered timeline. A 12-task offline golden
+> scorecard measures routing contracts. No model call, remote specialist, or P2 client is
+> claimed.
 
 The [target architecture](docs/architecture.md) and three accepted ADRs make the intended
-authority, Writer-only final rule, budgets, and degraded mode implemented through M2.
+authority, Writer-only final rule, budgets, and degraded mode implemented through M2, plus
+the M3 timeline and M4 evaluation boundary.
 [SHIP.md](docs/SHIP.md) remains the shorter source of truth for what is runnable.
 
 ## Run the free path
@@ -29,6 +31,10 @@ uvicorn mao.main:app --reload
 ```bash
 curl http://127.0.0.1:8000/health
 # {"status":"ok"}
+
+curl -s -X POST http://127.0.0.1:8000/v1/tasks \
+  -H "content-type: application/json" \
+  -d '{"task":"Audit retrieval risk","budget":{"max_handoffs":8}}'
 ```
 
 Run the actual free orchestration path as a library:
@@ -39,6 +45,13 @@ from mao.orchestrator import run_task
 result = run_task("Audit retrieval risk")
 print(result.model_dump_json(indent=2))
 # status=done, one bounded Critic -> Research retry, Writer-authored result
+```
+
+The CLI and offline scorecard use the same path:
+
+```bash
+python -m mao.task --task "Compare hybrid vs dense retrieval"
+python -m mao.evals.run --pretty
 ```
 
 ## Verify
@@ -55,14 +68,14 @@ pytest -q
 2. [agentic-rag-research](https://github.com/pabloalvarez99/agentic-rag-research) — bounded
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
    (**M5 live; release planned**)
-3. **multi-agent-orchestration** — coordination and handoffs (**M2 library live; HTTP health-only**)
+3. **multi-agent-orchestration** — coordination and handoffs (**M4 live; release planned**)
 4. RepoMind — code intelligence (**planned; no public implementation**)
 5. AI Platform — gateway and operations (**planned**)
 
 ## Next boundary
 
-M3 adds an append-only deterministic timeline. A task API, offline golden evaluation, and
-optional P2 research boundary remain later milestones; none is implied by the library path.
+M5 adds an optional P2 research boundary without changing the default fake path. A tagged
+release remains M6; neither is implied by the M4 API/evaluation surface.
 
 ## Documentation map
 
@@ -73,6 +86,7 @@ optional P2 research boundary remain later milestones; none is implied by the li
 - [ADR-0003](docs/adr/0003-degraded-mode.md) — explicit evidence-preserving degradation.
 - [SHIP](docs/SHIP.md) — LIVE/PLANNED truth and release gate.
 - [Portfolio](docs/PORTFOLIO.md) — P1 → P5 maturity ladder.
+- [Golden task schema](data/eval/README.md) — curation, coverage, metrics, and limits.
 
 ## License
 

@@ -1,10 +1,11 @@
 # Architecture — bounded specialist coordination
 
-Status: **P3-M2 LIVE as a library; M3–M6 are target architecture.** Integrated `main`
+Status: **P3-M4 LIVE on the deterministic free path; M5–M6 remain planned.** Integrated `main`
 contains immutable message/result models, deterministic Research/Critic/Writer specialists,
 an in-memory bus, explicit transition policy, global handoff and Critic-retry budgets,
-Writer-only final enforcement, and typed degraded/budget-exhausted results. FastAPI still
-exposes only `GET /health`; there is no task route, timeline, evaluation set, or P2 client.
+Writer-only final enforcement, typed degraded/budget-exhausted results, an ordered JSON-safe
+timeline, `POST /v1/tasks`, a JSON CLI, and a 12-task offline scorecard. There is no P2 client,
+remote specialist, hosted model, or release.
 
 The system exists to answer one question: how can several specialists cooperate without
 turning role prompts into an unbounded, unauditable conversation?
@@ -13,19 +14,19 @@ turning role prompts into an unbounded, unauditable conversation?
 
 ```mermaid
 flowchart LR
-    C[Python caller] --> O[run_task / Orchestrator]
+    C[Python / CLI / POST v1 tasks] --> O[run_task / Orchestrator]
     O --> R[FakeResearchAgent]
     R --> K[FakeCriticAgent]
     K -->|bounded reject| R
     K -->|accept| W[FakeWriterAgent]
     W --> X[TaskResult]
-    H[HTTP caller] --> G[GET /health]
+    H[Health caller] --> G[GET /health]
 ```
 
-The orchestration surface is Python-only. `GET /health` proves process availability and does
-not invoke the team.
+All three task surfaces project the same `TaskResult`; `GET /health` proves process
+availability and does not invoke the team.
 
-## Target transport and timeline
+## Runtime topology
 
 ```mermaid
 flowchart LR
@@ -44,8 +45,8 @@ flowchart LR
 
 The current orchestrator is policy, not a fourth content author. It validates messages,
 selects the next recipient, counts handoffs/retries, and decides the terminal status.
-Specialists exchange typed values rather than shared mutable state. Recording each transition
-and exposing the task over HTTP remain M3/later work.
+Specialists exchange typed values rather than shared mutable state. Each transition is
+recorded before the result is projected through API or CLI.
 
 ## Roles and authority
 
@@ -136,30 +137,28 @@ contract and its tests land.
 
 ## Timeline contract
 
-M3 will add an append-only timeline. Each record should include sequence number,
-correlation id, sender, recipient, event type, remaining budget, outcome, and a safe content
-digest or bounded summary. No secrets, raw environment variables, hidden prompts, or provider
-credentials belong in it.
+M3 records an immutable ordered tuple of JSON-safe events. Each event has a contiguous
+`sequence`, closed-set `event`, closed-set `actor`, and bounded JSON payload. The event set is
+`task_started`, `handoff`, `agent_output`, `decision`, `specialist_error`, and `stop`.
 
-The minimum event set is `task_started`, `handoff_requested`, `specialist_completed`,
-`specialist_failed`, `budget_changed`, `final_written`, `degraded`, and `task_stopped`.
-Sequence numbers, not wall-clock timestamps, establish deterministic order on the free path.
+The trace omits the full task text and credentials. It records provider `fake` and billed cost
+`0.0` at task start, every dispatch, routing/retry/stop decisions, specialist error type, and
+the final status/accounting. Sequence numbers, not wall-clock timestamps, establish
+deterministic order. A correlation id and external log transport remain future concerns.
 
 ## Evaluation boundary
 
-M4 will introduce offline golden tasks only after the orchestrator exists. Required slices:
+M4 runs 12 committed tasks across `happy_path`, `critic_retry`, and `budget_stop`. Each case
+declares exact status, ordered participants, handoffs, and retries. The scorecard reports pass
+rate, mean handoffs, retry-task rate, Writer completion rate, and terminal-status counts, with
+provider `fake` and billed cost `$0`. See the [dataset README](../data/eval/README.md).
 
-- accepted first-pass research;
-- Critic rejection followed by bounded re-research;
-- Writer-only final enforcement;
-- global handoff exhaustion;
-- Research, Critic, and Writer failure isolation; and
-- deterministic timeline replay.
-
-Fake specialists may prove routing, accounting, isolation, and trace contracts. They cannot
-prove answer quality, specialist diversity, or model collaboration gains. Any future claim
-that multiple agents outperform one agent needs paired tasks, named providers, cost/step
-accounting, and uncertainty.
+The dataset does not inject crashing specialists, so degraded failure isolation remains a
+unit-test claim rather than a golden-scorecard slice. Fake specialists prove routing,
+accounting, ownership, budgets, and trace contracts. They cannot prove answer quality,
+specialist diversity, or model collaboration gains. Any future claim that multiple agents
+outperform one agent needs paired tasks, named providers, cost/step accounting, and
+uncertainty.
 
 ## Optional P2 boundary
 
@@ -175,8 +174,8 @@ local and credential-free.
 | M0 | Package, FastAPI process, `GET /health`, offline test, empty-key CI | **LIVE** |
 | M1 | Typed protocol and deterministic Research/Critic/Writer specialists | **LIVE** |
 | M2 | Orchestrator, transition policy, handoff/retry budgets, Writer-only final, degraded result | **LIVE as a library** |
-| M3 | Deterministic multi-agent timeline | **PLANNED** |
-| M4 | Offline golden tasks and behavioral scorecard | **PLANNED** |
+| M3 | Deterministic multi-agent timeline | **LIVE** |
+| M4 | `POST /v1/tasks`, JSON CLI, 12 offline goldens and behavioral scorecard | **LIVE** |
 | M5 | Optional P2 HTTP research boundary | **PLANNED** |
 | M6 | Ship polish and v0.1.0 release | **PLANNED** |
 
