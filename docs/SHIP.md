@@ -13,6 +13,7 @@ python -m pip install -e ".[dev]"
 python -m pytest -q
 python -m uvicorn mao.main:app --port 8000
 curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8000/metrics
 # browser console: http://127.0.0.1:8000/
 ```
 
@@ -33,6 +34,9 @@ curl http://127.0.0.1:8000/health
 | HTTP-absent evaluation slice | **LIVE** | two configuration cases, zero network calls |
 | Optional P2 integration | **LIVE (opt-in)** | mocked success/error/timeout tests; ADR-0004 |
 | Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |
+| Prometheus text metrics | **LIVE** | content type, stable metric names, and post-task counter test |
+| Timeline JSON download | **LIVE** | attachment header and exact in-memory event sequence test |
+| Per-specialist elapsed timings | **LIVE (debug)** | injected-clock accounting test and result-page test |
 | Generated UI captures | **LIVE** | Playwright script, pinned inputs, committed SHA-256 manifest |
 | Non-root Docker + standalone Compose | **LIVE** | local build and container smoke |
 | Tagged `v0.1.0` release | **LIVE** | public release targets the exact green release commit |
@@ -50,7 +54,8 @@ curl http://127.0.0.1:8000/health
 *Deterministic fake specialists. Not a quality claim.* The script uses the real localhost app
 and fake form path. It pins viewport, locale, task text, and budgets, disables motion, and
 normalizes only the displayed request ID to `capture-fixed-request-id`; production request IDs
-remain unique. Two consecutive generation runs produced byte-identical PNGs recorded in
+remain unique. It also normalizes displayed debug timings to `0.100 ms`; production timings
+use a monotonic process clock. Two consecutive generation runs produced byte-identical PNGs recorded in
 [`ui-captures.sha256`](assets/ui-captures.sha256).
 
 ```bash
@@ -71,6 +76,8 @@ claimed.
 - specialist/policy failures become explicit degraded results;
 - API and CLI project the canonical result shape;
 - traces are ordered, JSON-safe, and omit full task content;
+- `/metrics` exposes process, request, terminal-status, and handoff signals without a backend;
+- UI traces download as JSON attachments, and specialist timings remain debug-only;
 - all 12 committed golden tasks meet their routing/accounting expectations;
 - ruff, strict mypy, unit tests, and both eval slices run on Python 3.12; and
 - the current free path does not need an OpenAI key.
