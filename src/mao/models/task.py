@@ -7,6 +7,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from mao.models.messages import AgentName, TaskBudget
+from mao.models.trace import TraceEvent
 
 
 class TaskStatus(StrEnum):
@@ -28,6 +29,7 @@ class TaskResult(BaseModel):
     handoffs_used: int = Field(ge=0)
     research_retries: int = Field(ge=0, le=2)
     budget: TaskBudget
+    trace: tuple[TraceEvent, ...]
 
     @model_validator(mode="after")
     def validate_accounting(self) -> TaskResult:

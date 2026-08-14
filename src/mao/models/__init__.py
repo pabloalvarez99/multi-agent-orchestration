@@ -8,6 +8,7 @@ from mao.models.messages import (
     TaskBudget,
 )
 from mao.models.task import TaskResult, TaskStatus
+from mao.models.trace import TraceEvent, TraceEventName
 
 __all__ = [
     "AgentMessage",
@@ -17,4 +18,6 @@ __all__ = [
     "TaskBudget",
     "TaskResult",
     "TaskStatus",
+    "TraceEvent",
+    "TraceEventName",
 ]
