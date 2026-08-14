@@ -47,7 +47,13 @@ class Orchestrator:
         self._policy = policy or OrchestrationPolicy()
         self._clock_ns = clock_ns
 
-    def run(self, task: str, *, budget: TaskBudget | None = None) -> TaskResult:
+    def run(
+        self,
+        task: str,
+        *,
+        budget: TaskBudget | None = None,
+        seed: int = 0,
+    ) -> TaskResult:
         """Execute ``task`` until Writer finishes, a budget ends, or a specialist fails."""
         limits = budget or TaskBudget()
         current = HandoffMessage(
@@ -70,6 +76,7 @@ class Orchestrator:
                 "max_research_retries": limits.max_research_retries,
                 "provider": self._research_provider,
                 "billed_usd": 0.0,
+                "seed": seed,
             },
         )
 
@@ -220,9 +227,15 @@ class Orchestrator:
         actor: AgentName,
         payload: dict[str, JsonValue],
     ) -> None:
-        """Append one event with a contiguous deterministic sequence number."""
+        """Append one event with deterministic logical replay time."""
         trace.append(
-            TraceEvent(sequence=len(trace), event=event, actor=actor, payload=payload)
+            TraceEvent(
+                sequence=len(trace),
+                event=event,
+                ts_offset_ms=len(trace),
+                actor=actor,
+                payload=payload,
+            )
         )
 
     @staticmethod
@@ -267,9 +280,10 @@ def run_task(
     *,
     budget: TaskBudget | None = None,
     research_agent: Agent | None = None,
+    seed: int = 0,
 ) -> TaskResult:
     """Run a task with the default credential-free team."""
-    return Orchestrator(research_agent=research_agent).run(task, budget=budget)
+    return Orchestrator(research_agent=research_agent).run(task, budget=budget, seed=seed)
 
 
 __all__ = ["Orchestrator", "run_task"]

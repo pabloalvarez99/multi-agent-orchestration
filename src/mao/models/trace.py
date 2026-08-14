@@ -16,6 +16,7 @@ TraceEventName = Literal[
     "specialist_error",
     "stop",
 ]
+TRACE_SCHEMA_VERSION: Literal[1] = 1
 
 
 class TraceEvent(BaseModel):
@@ -25,5 +26,16 @@ class TraceEvent(BaseModel):
 
     sequence: int = Field(ge=0)
     event: TraceEventName
+    ts_offset_ms: int = Field(ge=0)
     actor: AgentName
     payload: dict[str, JsonValue] = Field(default_factory=dict)
+
+
+class TraceEnvelope(BaseModel):
+    """Versioned replay payload for one retained run."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    trace_schema: Literal[1] = TRACE_SCHEMA_VERSION
+    run_id: str = Field(min_length=1, max_length=128)
+    events: tuple[TraceEvent, ...]

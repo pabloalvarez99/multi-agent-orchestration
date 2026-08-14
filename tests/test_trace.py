@@ -15,6 +15,7 @@ def test_happy_timeline_contains_orchestrator_and_writer() -> None:
     assert result.trace[0].event == "task_started"
     assert result.trace[-1].event == "stop"
     assert [event.sequence for event in result.trace] == list(range(len(result.trace)))
+    assert [event.ts_offset_ms for event in result.trace] == list(range(len(result.trace)))
 
 
 def test_every_dispatched_handoff_is_in_the_timeline() -> None:
@@ -45,3 +46,10 @@ def test_budget_stop_is_an_explicit_terminal_decision() -> None:
     assert result.trace[-2].event == "decision"
     assert result.trace[-2].payload["reason"] == "max_handoffs"
     assert result.trace[-1].payload["status"] == "budget_exhausted"
+
+
+def test_same_task_and_seed_produce_the_same_event_sequence() -> None:
+    first = run_task("Audit retrieval risk", seed=41)
+    second = run_task("Audit retrieval risk", seed=41)
+
+    assert first.trace == second.trace

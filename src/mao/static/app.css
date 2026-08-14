@@ -46,6 +46,13 @@ button:hover { background: #ddff98; transform: translateY(-1px); }
 .timing-list div { min-width: 8.5rem; padding: .55rem .7rem; border: 1px solid var(--line); background: var(--deep); }
 .timing-list dt { color: var(--muted); font: .7rem ui-monospace, monospace; text-transform: uppercase; }
 .timing-list dd { margin: .15rem 0 0; color: var(--lime); font: 800 .84rem ui-monospace, monospace; }
+.replay-panel { padding: 1rem; border: 1px solid var(--line); background: #11110f; }
+.replay-panel > p:not(.section-label) { color: var(--muted); }
+.replay-panel nav { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+.replay-meta { display: grid; grid-template-columns: minmax(8rem, 1fr) 3fr; gap: .5rem; margin: .8rem 0 0; }
+.replay-meta div { min-width: 0; }
+.replay-meta dt { color: var(--muted); font: .7rem ui-monospace, monospace; text-transform: uppercase; }
+.replay-meta dd { margin: .15rem 0 0; overflow-wrap: anywhere; }
 .trace { margin-top: 2rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
 .trace summary { cursor: pointer; font-weight: 800; }
 .trace summary span { margin-left: .5rem; color: var(--muted); font-weight: 400; }

@@ -61,6 +61,13 @@ CAPTURE_SPECS: Final = (
         expected_status="Done",
         target=".outcome",
     ),
+    CaptureSpec(
+        filename="ui-replay.png",
+        task="Replay an auditable specialist run",
+        max_handoffs=8,
+        expected_status="Done",
+        target=".replay-panel",
+    ),
 )
 
 
@@ -103,6 +110,10 @@ def _stabilize(page: Page) -> None:
     request_id = page.locator(".diagnostics code")
     request_id.wait_for(state="visible")
     request_id.evaluate("(node, value) => { node.textContent = value; }", FIXED_REQUEST_ID)
+    replay_request_id = page.locator(".replay-meta div:nth-child(2) code")
+    replay_request_id.evaluate(
+        "(node, value) => { node.textContent = value; }", FIXED_REQUEST_ID
+    )
     timings = page.locator(".timing-value")
     for index in range(timings.count()):
         timings.nth(index).evaluate("node => { node.textContent = '0.100 ms'; }")

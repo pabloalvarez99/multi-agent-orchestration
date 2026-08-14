@@ -141,6 +141,11 @@ contract and its tests land.
 
 ## Timeline contract
 
+Trace schema 1 adds deterministic logical `ts_offset_ms` values to every event and exposes
+the last 128 process-local runs through `/v1/runs/{id}` and `/v1/runs/{id}/trace`. See
+[ADR-0005](adr/0005-versioned-process-local-traces.md). Retention resets on process recycle;
+it is an inspectable demo seam, not a database.
+
 M3 records an immutable ordered tuple of JSON-safe events. Each event has a contiguous
 `sequence`, closed-set `event`, closed-set `actor`, and bounded JSON payload. The event set is
 `task_started`, `handoff`, `agent_output`, `decision`, `specialist_error`, and `stop`.

@@ -17,10 +17,41 @@ def test_default_task_returns_the_exact_public_shape() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert set(body) == {"status", "result", "agents_involved", "trace"}
+    assert set(body) == {"trace_schema", "status", "result", "agents_involved", "trace"}
+    assert body["trace_schema"] == 1
     assert body["status"] == "done"
     assert body["agents_involved"] == ["orchestrator", "research", "critic", "writer"]
     assert body["trace"][-1]["event"] == "stop"
+
+
+def test_completed_task_is_available_through_versioned_run_endpoints() -> None:
+    response = client.post(
+        "/v1/tasks",
+        json={"task": "Replay this exact route", "seed": 37},
+        headers={"x-request-id": "replay-contract-test"},
+    )
+
+    run = client.get("/v1/runs/replay-contract-test")
+    trace = client.get("/v1/runs/replay-contract-test/trace")
+
+    assert response.status_code == run.status_code == trace.status_code == 200
+    assert run.json()["trace_schema"] == trace.json()["trace_schema"] == 1
+    assert run.json()["seed"] == 37
+    assert len(run.json()["task_sha256"]) == 64
+    assert "Replay this exact route" not in trace.text
+    assert trace.json()["run_id"] == "replay-contract-test"
+    assert trace.json()["events"] == response.json()["trace"]
+    assert all(
+        {"event", "ts_offset_ms", "actor", "payload"} <= set(event)
+        for event in trace.json()["events"]
+    )
+
+
+def test_unknown_run_returns_a_typed_404() -> None:
+    response = client.get("/v1/runs/not-retained")
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "run_not_found", "run_id": "not-retained"}
 
 
 def test_request_budget_controls_the_global_handoff_limit() -> None:

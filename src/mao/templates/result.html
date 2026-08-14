@@ -29,12 +29,25 @@
         <dt>{{ agent.value }}</dt><dd class="timing-value">{{ "%.3f" | format(elapsed_ms) }} ms</dd>
       </div>{% endfor %}</dl>
     </section>
+    <section class="replay-panel" aria-labelledby="replay-heading">
+      <p class="section-label">Replay contract</p><h3 id="replay-heading">Audit this run</h3>
+      <p>The last 128 runs are retained in this process. Instance recycle or FIFO eviction
+      ends availability; this is deliberately not a database.</p>
+      <dl class="replay-meta">
+        <div><dt>Trace schema</dt><dd><code>1</code></dd></div>
+        <div><dt>Run ID</dt><dd><code>{{ request_id }}</code></dd></div>
+      </dl>
+      <nav aria-label="Replay links">
+        <a class="download-link" href="/v1/runs/{{ request_id }}">Run record</a>
+        <a class="download-link" href="/v1/runs/{{ request_id }}/trace">Versioned trace</a>
+      </nav>
+    </section>
     <details class="trace" open>
       <summary>Ordered execution trace <span>{{ result.trace | length }} events</span></summary>
       <p><a class="download-link" href="/ui/tasks/{{ request_id }}/timeline.json" download>Download timeline JSON</a></p>
       <ol>{% for entry in result.trace %}<li>
         <span class="sequence">{{ "%02d" | format(entry.sequence) }}</span>
-        <div class="event-card"><div class="event-title"><h3>{{ entry.event | replace('_', ' ') }}</h3><span>{{ entry.actor.value }}</span></div><pre>{{ entry.payload | tojson(indent=2) }}</pre></div>
+        <div class="event-card"><div class="event-title"><h3>{{ entry.event | replace('_', ' ') }}</h3><span>+{{ entry.ts_offset_ms }} ms · {{ entry.actor.value }}</span></div><pre>{{ entry.payload | tojson(indent=2) }}</pre></div>
       </li>{% endfor %}</ol>
     </details>
     <footer class="diagnostics"><span>Request ID</span><code>{{ request_id }}</code><span class="mode">Deterministic / local</span></footer>

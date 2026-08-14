@@ -4,11 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from mao.agents import ResearchChoice, build_research_agent
-from mao.models import AgentName, TaskBudget, TaskResult, TaskStatus, TraceEvent
+from mao.models import (
+    TRACE_SCHEMA_VERSION,
+    AgentName,
+    TaskBudget,
+    TaskResult,
+    TaskStatus,
+    TraceEvent,
+)
 from mao.orchestrator import run_task
 
 
@@ -32,6 +40,7 @@ class TaskRequest(BaseModel):
     task: str = Field(min_length=1, max_length=8_000)
     budget: TaskBudgetRequest = Field(default_factory=TaskBudgetRequest)
     research: ResearchChoice = ResearchChoice.FAKE
+    seed: int = Field(default=0, ge=0, le=2_147_483_647)
 
 
 class TaskResponse(BaseModel):
@@ -39,6 +48,7 @@ class TaskResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    trace_schema: Literal[1] = TRACE_SCHEMA_VERSION
     status: TaskStatus
     result: str
     agents_involved: tuple[AgentName, ...]
@@ -78,6 +88,7 @@ def execute_task_request(request: TaskRequest) -> TaskResult:
         request.task,
         budget=request.budget.to_domain(),
         research_agent=research_agent,
+        seed=request.seed,
     )
 
 

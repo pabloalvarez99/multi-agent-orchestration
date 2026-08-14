@@ -15,13 +15,15 @@ def test_capture_script_declares_done_budget_and_trace_artifacts() -> None:
         "ui-done.png",
         "ui-budget.png",
         "ui-trace.png",
+        "ui-replay.png",
     ]
     assert [spec.expected_status for spec in CAPTURE_SPECS] == [
         "Done",
         "Budget Exhausted",
         "Done",
+        "Done",
     ]
-    assert CAPTURE_SPECS[-1].target == ".outcome"
+    assert CAPTURE_SPECS[-1].target == ".replay-panel"
     assert FIXED_REQUEST_ID == "capture-fixed-request-id"
 
 

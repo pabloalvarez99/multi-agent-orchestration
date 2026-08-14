@@ -17,13 +17,15 @@ from mao.api import (
 )
 from mao.metrics import MetricsRegistry
 from mao.middleware import MetricsMiddleware, RequestIdMiddleware, request_id_of
-from mao.models import TaskResult
+from mao.models import TaskResult, TraceEnvelope
+from mao.runs import RunRecord, RunStore, retain_run
 from mao.ui import STATIC_DIRECTORY, build_ui_router
 
 
 def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
     """Build an application around an injected, side-effect-free task runner."""
     metrics = MetricsRegistry()
+    runs = RunStore(max_entries=128)
 
     def observed_runner(request: TaskRequest) -> TaskResult:
         result = runner(request)
@@ -73,12 +75,42 @@ def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
         )
 
     @application.post("/v1/tasks", response_model=TaskResponse)
-    def execute_task(request: TaskRequest) -> TaskResponse:
+    def execute_task(payload: TaskRequest, request: Request) -> TaskResponse:
         """Run one task under its global handoff budget."""
-        result = observed_runner(request)
+        result = observed_runner(payload)
+        run_id = request_id_of(request.scope) or "unavailable"
+        retain_run(
+            runs,
+            run_id=run_id,
+            task=payload.task,
+            seed=payload.seed,
+            result=result,
+        )
         return TaskResponse.from_result(result)
 
-    application.include_router(build_ui_router(observed_runner))
+    @application.get("/v1/runs/{run_id}", response_model=RunRecord)
+    def get_run(run_id: str) -> RunRecord | JSONResponse:
+        """Return retained replay metadata for one process-local run."""
+        record = runs.get(run_id)
+        if record is None:
+            return JSONResponse(
+                status_code=int(HTTPStatus.NOT_FOUND),
+                content={"error": "run_not_found", "run_id": run_id},
+            )
+        return record
+
+    @application.get("/v1/runs/{run_id}/trace", response_model=TraceEnvelope)
+    def get_run_trace(run_id: str) -> TraceEnvelope | JSONResponse:
+        """Return the versioned replay trace for one process-local run."""
+        trace = runs.get_trace(run_id)
+        if trace is None:
+            return JSONResponse(
+                status_code=int(HTTPStatus.NOT_FOUND),
+                content={"error": "run_not_found", "run_id": run_id},
+            )
+        return trace
+
+    application.include_router(build_ui_router(observed_runner, runs))
 
     return application
 

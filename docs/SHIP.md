@@ -43,6 +43,8 @@ curl http://127.0.0.1:8000/metrics
 | Accessible trace UI and request IDs | **LIVE** | GET, submit, terminal-state, and no-network tests |
 | Prometheus text metrics | **LIVE** | content type, stable metric names, and post-task counter test |
 | Timeline JSON download | **LIVE** | attachment header and exact in-memory event sequence test |
+| Versioned replay endpoints | **LIVE (process-local)** | schema 1, run metadata/trace endpoints, typed 404, FIFO eviction test |
+| Deterministic event offsets | **LIVE** | same task + seed produces the exact event sequence; ADR-0005 |
 | Per-specialist elapsed timings | **LIVE (debug)** | injected-clock accounting test and result-page test |
 | Generated UI captures | **LIVE** | Playwright script, pinned inputs, committed SHA-256 manifest |
 | Non-root Docker + standalone Compose | **LIVE** | local build and container smoke |
@@ -57,6 +59,10 @@ curl http://127.0.0.1:8000/metrics
 ### Bounded Critic retry
 
 [![Seventeen-event Research, Critic, Writer timeline with one retry and visible request ID](assets/ui-trace.png)](assets/ui-trace.png)
+
+### Versioned replay
+
+[![Replay panel with schema 1 and retained-run links](assets/ui-replay.png)](assets/ui-replay.png)
 
 *Deterministic fake specialists. Not a quality claim.* The script uses the real localhost app
 and fake form path. It pins viewport, locale, task text, and budgets, disables motion, and
@@ -85,6 +91,7 @@ the fake team and does not claim hosted-model quality.
 - traces are ordered, JSON-safe, and omit full task content;
 - `/metrics` exposes process, request, terminal-status, and handoff signals without a backend;
 - UI traces download as JSON attachments, and specialist timings remain debug-only;
+- retained runs expose schema 1 metadata and events until process recycle or FIFO eviction;
 - all 12 committed golden tasks meet their routing/accounting expectations;
 - ruff, strict mypy, unit tests, and both eval slices run on Python 3.12; and
 - the current free path does not need an OpenAI key.

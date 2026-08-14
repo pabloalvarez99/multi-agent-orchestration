@@ -49,6 +49,14 @@ playwright install chromium
 python scripts/capture_ui.py
 ```
 
+![Replay panel with run ID and versioned trace endpoints](docs/assets/ui-replay.png)
+
+Each API/UI task is addressable during its process lifetime through
+`GET /v1/runs/{id}` and `GET /v1/runs/{id}/trace`. Trace schema 1 uses logical
+`ts_offset_ms` values so same task + seed produces an exactly comparable event sequence; see
+[ADR-0005](docs/adr/0005-versioned-process-local-traces.md). This is a bounded 128-run FIFO,
+not durable storage.
+
 ## Run the free path
 
 No API key or hosted provider is used.
@@ -134,6 +142,7 @@ python -m mao.evals.run
 | --- | --- |
 | Fake Research → Critic → Writer workflow, budgets, Writer-only final | **LIVE** |
 | JSON API, CLI, accessible UI, request IDs, ordered trace | **LIVE** |
+| Versioned trace replay + bounded last-128 run lookup | **LIVE (process-local)** |
 | Optional P2 HTTP Research, fail-closed to `degraded` | **LIVE (opt-in)** |
 | 12 fake goldens + two no-network boundary cases, billed `$0` | **LIVE** |
 | Ruff + mypy + pytest + evals in empty-key CI | **LIVE** |
@@ -167,6 +176,7 @@ remain future work after v0.1.0.
 - [ADR-0002](docs/adr/0002-writer-only-final.md) — Writer is the sole final speaker.
 - [ADR-0003](docs/adr/0003-degraded-mode.md) — explicit evidence-preserving degradation.
 - [ADR-0004](docs/adr/0004-optional-p2-boundary.md) — optional P2 boundary that fails closed.
+- [ADR-0005](docs/adr/0005-versioned-process-local-traces.md) — replay schema, logical offsets, and bounded retention.
 - [SHIP](docs/SHIP.md) — LIVE/PLANNED truth and release gate.
 - [Case study](docs/CASESTUDY.md) — interview-ready policy decisions and trade-offs.
 - [Portfolio](docs/PORTFOLIO.md) — P1 → P5 maturity ladder.

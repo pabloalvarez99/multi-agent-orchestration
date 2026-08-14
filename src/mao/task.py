@@ -17,6 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task", required=True, help="Task for the specialist team.")
     parser.add_argument("--max-handoffs", type=int, default=8, help="Global dispatch budget.")
+    parser.add_argument("--seed", type=int, default=0, help="Recorded deterministic run seed.")
     parser.add_argument(
         "--research",
         choices=[choice.value for choice in ResearchChoice],
@@ -34,6 +35,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             task=arguments.task,
             budget=TaskBudgetRequest(max_handoffs=arguments.max_handoffs),
             research=ResearchChoice(arguments.research),
+            seed=arguments.seed,
         )
         result = execute_task_request(request)
     except ValidationError as error:

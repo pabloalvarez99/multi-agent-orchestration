@@ -37,6 +37,8 @@ def test_submit_renders_status_request_id_and_ordered_trace_without_network(
     assert "Ordered execution trace" in response.text
     assert "Specialist time" in response.text
     assert "Download timeline JSON" in response.text
+    assert "Audit this run" in response.text
+    assert "Versioned trace" in response.text
     assert "orchestrator" in response.text
     assert "writer" in response.text
     assert response.headers["x-request-id"] in response.text
@@ -67,6 +69,9 @@ def test_result_timeline_download_matches_the_in_memory_trace() -> None:
     assert [event["event"] for event in download.json()] == [
         event.event for event in captured[0].trace
     ]
+    versioned = client.get(f"/v1/runs/{request_id}/trace")
+    assert versioned.json()["trace_schema"] == 1
+    assert versioned.json()["events"] == download.json()
 
 
 def test_budget_exhausted_is_rendered_as_a_first_class_result() -> None:
