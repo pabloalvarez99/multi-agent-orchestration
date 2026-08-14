@@ -5,7 +5,13 @@ repository can be cloned, tested, and run without a key. The fake team remains t
 for library, API, CLI, UI, and 12-task scorecard. An explicitly selected HTTP Research agent
 can call P2 when `AGENTIC_RAG_URL` is configured and fails closed otherwise.
 
+**Hosted free path LIVE:** <https://pax-orchestration.vercel.app>. It runs the deterministic
+fake specialists and spends no model credits. Expect serverless cold starts; metrics and
+retained runs are in-process only and disappear when the instance is recycled.
+
 ## Try the free path
+
+Open <https://pax-orchestration.vercel.app> or reproduce it locally:
 
 ```bash
 python -m venv .venv
@@ -22,6 +28,7 @@ curl http://127.0.0.1:8000/metrics
 | Capability | State | Evidence |
 | --- | --- | --- |
 | Python package and FastAPI process | **LIVE** | package import and app startup |
+| Public Vercel console/API | **LIVE** | [`pax-orchestration.vercel.app`](https://pax-orchestration.vercel.app); root adapter + production smoke |
 | `GET /health` | **LIVE** | route and offline test |
 | `POST /v1/tasks` and JSON CLI | **LIVE** | response-shape, OpenAPI, budget, and CLI tests |
 | CI with OpenAI and P2 URL settings empty | **LIVE** | ruff, mypy, pytest, and evals workflow |
@@ -64,8 +71,8 @@ playwright install chromium
 python scripts/capture_ui.py
 ```
 
-The live P2 smoke is still opt-in and is not involved in these captures. No hosted demo is
-claimed.
+The live P2 smoke is still opt-in and is not involved in these captures. The hosted demo uses
+the fake team and does not claim hosted-model quality.
 
 ## What CI proves today
 
@@ -88,7 +95,7 @@ multi-model collaboration. HTTP tests prove the boundary contract, not quality u
 ## Non-goals for v0.1.0
 
 - No claim that several agents outperform one.
-- No hosted model default, shared memory, arbitrary tools, or hosted demo.
+- No hosted model default, durable shared memory, or arbitrary tools.
 - No remote-agent isolation, hosted quality score, or cost comparison.
 - No silent promotion of target architecture to LIVE documentation.
 

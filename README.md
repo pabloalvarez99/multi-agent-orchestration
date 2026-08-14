@@ -19,6 +19,11 @@ retry budgets, with Writer-only final output and typed degraded outcomes.
 > public P2 HTTP boundary when `AGENTIC_RAG_URL` is explicitly configured. No model key is
 > required and the default path makes no network call.
 
+**Hosted free path:** [pax-orchestration.vercel.app](https://pax-orchestration.vercel.app)
+opens the same fake-specialist console with no account, API key, or paid model. The hosted
+demo has serverless cold starts and process-local metrics/trace retention: both reset whenever
+Vercel recycles an instance.
+
 The [architecture](docs/architecture.md) and four accepted ADRs make the intended
 authority, Writer-only final rule, budgets, and degraded mode implemented through M2, plus
 the M3 timeline and M4 evaluation boundary.
@@ -47,6 +52,9 @@ python scripts/capture_ui.py
 ## Run the free path
 
 No API key or hosted provider is used.
+
+Try it immediately at <https://pax-orchestration.vercel.app>, or run the identical path
+locally:
 
 ```bash
 python -m venv .venv
@@ -130,6 +138,7 @@ python -m mao.evals.run
 | 12 fake goldens + two no-network boundary cases, billed `$0` | **LIVE** |
 | Ruff + mypy + pytest + evals in empty-key CI | **LIVE** |
 | Non-root Docker image and standalone Compose | **LIVE** |
+| Hosted credential-free console and API | **LIVE** — [`pax-orchestration.vercel.app`](https://pax-orchestration.vercel.app) |
 | Hosted models, remote-process isolation, multi-agent quality uplift | **PLANNED / not claimed** |
 | Public [`v0.1.0`](https://github.com/pabloalvarez99/multi-agent-orchestration/releases/tag/v0.1.0) GitHub release | **LIVE** |
 
