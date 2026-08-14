@@ -3,7 +3,7 @@
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from mao.agents import ResearchCapabilityMissing
@@ -15,12 +15,21 @@ from mao.api import (
     TaskRunner,
     execute_task_request,
 )
-from mao.middleware import RequestIdMiddleware, request_id_of
+from mao.metrics import MetricsRegistry
+from mao.middleware import MetricsMiddleware, RequestIdMiddleware, request_id_of
+from mao.models import TaskResult
 from mao.ui import STATIC_DIRECTORY, build_ui_router
 
 
 def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
     """Build an application around an injected, side-effect-free task runner."""
+    metrics = MetricsRegistry()
+
+    def observed_runner(request: TaskRequest) -> TaskResult:
+        result = runner(request)
+        metrics.record_task(result)
+        return result
+
     application = FastAPI(
         title="Multi-Agent Orchestration",
         description=(
@@ -30,6 +39,7 @@ def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
         version="0.1.0",
     )
     application.add_middleware(RequestIdMiddleware)
+    application.add_middleware(MetricsMiddleware, registry=metrics)
     application.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
     @application.exception_handler(ResearchCapabilityMissing)
@@ -54,13 +64,21 @@ def create_app(*, runner: TaskRunner = execute_task_request) -> FastAPI:
         """Report process availability without constructing a specialist."""
         return {"status": "ok"}
 
+    @application.get("/metrics", include_in_schema=False)
+    def prometheus_metrics() -> Response:
+        """Expose dependency-free process counters in Prometheus text format."""
+        return Response(
+            content=metrics.render(),
+            headers={"Content-Type": "text/plain; version=0.0.4; charset=utf-8"},
+        )
+
     @application.post("/v1/tasks", response_model=TaskResponse)
     def execute_task(request: TaskRequest) -> TaskResponse:
         """Run one task under its global handoff budget."""
-        result = runner(request)
+        result = observed_runner(request)
         return TaskResponse.from_result(result)
 
-    application.include_router(build_ui_router(runner))
+    application.include_router(build_ui_router(observed_runner))
 
     return application
 

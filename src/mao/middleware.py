@@ -2,14 +2,32 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from mao.request_id import REQUEST_ID_HEADER, resolve_request_id
 
+if TYPE_CHECKING:
+    from mao.metrics import MetricsRegistry
+
 REQUEST_ID_SCOPE_KEY: Final = "request_id"
+
+
+class MetricsMiddleware:
+    """Count every HTTP request without adding route-cardinality labels."""
+
+    def __init__(self, app: ASGIApp, *, registry: MetricsRegistry) -> None:
+        """Wrap an ASGI application with its process-local registry."""
+        self.app = app
+        self.registry = registry
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Increment for HTTP scopes and transparently pass other scopes."""
+        if scope["type"] == "http":
+            self.registry.record_request()
+        await self.app(scope, receive, send)
 
 
 def request_id_of(scope: Scope) -> str | None:
