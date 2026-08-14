@@ -2,16 +2,16 @@
 
 [![CI](https://github.com/pabloalvarez99/multi-agent-orchestration/actions/workflows/ci.yml/badge.svg)](https://github.com/pabloalvarez99/multi-agent-orchestration/actions/workflows/ci.yml)
 
-Public scaffold for project 3 in a five-system
-[AI Engineering portfolio](https://github.com/pabloalvarez99). The intended project will
-study bounded specialist handoffs, explicit budgets, isolation, degradation, and inspectable
-timelines.
+Project 3 in a five-system [AI Engineering portfolio](https://github.com/pabloalvarez99):
+deterministic Research, Critic, and Writer specialists coordinated under explicit handoff and
+retry budgets, with Writer-only final output and typed degraded outcomes.
 
-> **Scaffold only:** the repository currently exposes `GET /health`. No agent, orchestrator,
-> handoff policy, model call, or multi-agent loop is implemented yet.
+> **M2 library LIVE; HTTP remains health-only.** `run_task()` executes the bounded in-process
+> fake team. The FastAPI app still exposes only `GET /health`; no task endpoint, timeline,
+> golden evaluation, model call, or remote specialist is claimed.
 
-The [target architecture](docs/architecture.md) and three proposed ADRs make the intended
-authority, Writer-only final rule, budgets, and degraded mode reviewable before code lands.
+The [target architecture](docs/architecture.md) and three accepted ADRs make the intended
+authority, Writer-only final rule, budgets, and degraded mode implemented through M2.
 [SHIP.md](docs/SHIP.md) remains the shorter source of truth for what is runnable.
 
 ## Run the free path
@@ -31,6 +31,16 @@ curl http://127.0.0.1:8000/health
 # {"status":"ok"}
 ```
 
+Run the actual free orchestration path as a library:
+
+```python
+from mao.orchestrator import run_task
+
+result = run_task("Audit retrieval risk")
+print(result.model_dump_json(indent=2))
+# status=done, one bounded Critic -> Research retry, Writer-authored result
+```
+
 ## Verify
 
 ```bash
@@ -45,14 +55,14 @@ pytest -q
 2. [agentic-rag-research](https://github.com/pabloalvarez99/agentic-rag-research) — bounded
    plan/retrieve/critique research loop with API, CLI, optional P1 HTTP, and offline evals
    (**M5 live; release planned**)
-3. **multi-agent-orchestration** — coordination and handoffs (**scaffold only**)
+3. **multi-agent-orchestration** — coordination and handoffs (**M2 library live; HTTP health-only**)
 4. RepoMind — code intelligence (**planned; no public implementation**)
 5. AI Platform — gateway and operations (**planned**)
 
 ## Next boundary
 
-The first implementation milestone will define typed handoff and state contracts before
-adding any agent loop. That work is deliberately outside this scaffold release.
+M3 adds an append-only deterministic timeline. A task API, offline golden evaluation, and
+optional P2 research boundary remain later milestones; none is implied by the library path.
 
 ## Documentation map
 

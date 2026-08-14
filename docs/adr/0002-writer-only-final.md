@@ -1,6 +1,6 @@
 # ADR-0002: Only Writer may produce final user-facing text
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-13
 
 ## Context

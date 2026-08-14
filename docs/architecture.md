@@ -1,9 +1,10 @@
 # Architecture — bounded specialist coordination
 
-Status: **P3-M0 LIVE; M1–M6 are target architecture.** The integrated repository exposes
-only `GET /health` from a credential-free FastAPI scaffold. The agent protocol, specialists,
-orchestrator, handoff budgets, timeline, evaluation set, and P2 integration described below
-are not callable on `main` yet.
+Status: **P3-M2 LIVE as a library; M3–M6 are target architecture.** Integrated `main`
+contains immutable message/result models, deterministic Research/Critic/Writer specialists,
+an in-memory bus, explicit transition policy, global handoff and Critic-retry budgets,
+Writer-only final enforcement, and typed degraded/budget-exhausted results. FastAPI still
+exposes only `GET /health`; there is no task route, timeline, evaluation set, or P2 client.
 
 The system exists to answer one question: how can several specialists cooperate without
 turning role prompts into an unbounded, unauditable conversation?
@@ -12,14 +13,19 @@ turning role prompts into an unbounded, unauditable conversation?
 
 ```mermaid
 flowchart LR
-    C[Caller] --> H[GET /health]
-    H --> O[{status: ok}]
+    C[Python caller] --> O[run_task / Orchestrator]
+    O --> R[FakeResearchAgent]
+    R --> K[FakeCriticAgent]
+    K -->|bounded reject| R
+    K -->|accept| W[FakeWriterAgent]
+    W --> X[TaskResult]
+    H[HTTP caller] --> G[GET /health]
 ```
 
-That is the complete LIVE surface. The health response proves process availability, not
-orchestration capability.
+The orchestration surface is Python-only. `GET /health` proves process availability and does
+not invoke the team.
 
-## Target topology
+## Target transport and timeline
 
 ```mermaid
 flowchart LR
@@ -36,9 +42,10 @@ flowchart LR
     W --> T
 ```
 
-The orchestrator is policy, not a fourth content author. It validates messages, selects the
-next recipient, decrements the global budget, records the transition, and decides which
-terminal state is safe. Specialists exchange typed values rather than shared mutable state.
+The current orchestrator is policy, not a fourth content author. It validates messages,
+selects the next recipient, counts handoffs/retries, and decides the terminal status.
+Specialists exchange typed values rather than shared mutable state. Recording each transition
+and exposing the task over HTTP remain M3/later work.
 
 ## Roles and authority
 
@@ -49,27 +56,27 @@ terminal state is safe. Specialists exchange typed values rather than shared mut
 | Critic | Accept/reject decision and actionable concerns | Write the final answer or retry without a bound |
 | Writer | Final user-facing answer from accepted evidence | Research new facts or bypass Critic |
 
-The proposed role boundary is recorded in [ADR-0001](adr/0001-specialist-roles.md). The
+The role boundary is recorded in [ADR-0001](adr/0001-specialist-roles.md). The
 Writer-only output rule is separate because it is a security and provenance property, not
 merely a division of labor ([ADR-0002](adr/0002-writer-only-final.md)).
 
-## Target handoff contract
+## Handoff contract
 
-Every cross-agent message needs enough information to audit accountability and remaining
-authority:
+The M1 contract is strict and immutable. Some fields needed for an external timeline remain
+planned rather than being backfilled into a LIVE claim:
 
-| Field | Purpose |
-| --- | --- |
-| `kind` | Discriminates handoff, final, failure, and timeline records. |
-| `sender`, `recipient` | Closed-set identities; prevents accidental broadcast. |
-| `task` | Immutable root work unit. |
-| `content` | Bounded memo for the addressed specialist. |
-| `context_refs` | Evidence pointers, not copied hidden state. |
-| `attempt` | Research/critique retry number. |
-| `budget` | Remaining handoffs and retry allowance. |
-| `correlation_id` | Joins all events from one task without exposing content in logs. |
+| Field | Purpose | State |
+| --- | --- | --- |
+| `kind` | Discriminates handoff from Writer final. | **LIVE** |
+| `sender`, `recipient` | Closed-set identities; prevents accidental broadcast. | **LIVE** |
+| `task` | Bounded root work unit carried across handoffs. | **LIVE** |
+| `content` | Bounded memo for the addressed specialist. | **LIVE** |
+| `attempt` | Research/critique retry number. | **LIVE** |
+| `TaskBudget` | Global handoff and research-retry ceilings supplied to the run. | **LIVE** |
+| `context_refs` | Evidence pointers rather than copied hidden state. | **PLANNED** |
+| `correlation_id` | Joins future timeline/API records. | **PLANNED** |
 
-Models should reject unknown fields and invalid sender/recipient transitions. A future remote
+Models reject unknown fields, and policy rejects invalid sender/recipient transitions. A remote
 specialist must implement the same contract as the deterministic fake; transport choice must
 not change policy.
 
@@ -104,7 +111,12 @@ only input it may summarize.
 
 ## Isolation and degraded mode
 
-A specialist failure is data for the orchestrator, not an empty memo. The proposed policy is:
+A specialist failure is data for the orchestrator, not an empty memo. Today the isolation
+boundary catches a specialist/policy exception and returns `TaskStatus.DEGRADED` with the
+active specialist, exception type, and explanation. Tests cover a crashing Critic and a
+Research specialist attempting to impersonate Writer.
+
+The fuller evidence-preserving target is:
 
 | Failure point | Safe result | Unsafe behavior |
 | --- | --- | --- |
@@ -115,8 +127,12 @@ A specialist failure is data for the orchestrator, not an empty memo. The propos
 | Budget expires with partial evidence | `budget_exhausted` or `degraded`, preserving evidence and missing work | report success |
 
 `degraded` means the workflow returned less than its intended contract and says exactly why.
-It is not a synonym for exception suppression. The full decision is proposed in
+It is not a synonym for exception suppression. The decision is recorded in
 [ADR-0003](adr/0003-degraded-mode.md).
+
+The current `TaskResult` does not yet expose partial evidence as a separate field; only its
+explanation and accounting survive. Do not claim evidence-preserving partial output until that
+contract and its tests land.
 
 ## Timeline contract
 
@@ -157,8 +173,8 @@ local and credential-free.
 | Milestone | Capability | State |
 | --- | --- | --- |
 | M0 | Package, FastAPI process, `GET /health`, offline test, empty-key CI | **LIVE** |
-| M1 | Typed protocol and deterministic Research/Critic/Writer specialists | **PLANNED on `main`** |
-| M2 | Orchestrator, transition policy, handoff/retry budgets | **PLANNED** |
+| M1 | Typed protocol and deterministic Research/Critic/Writer specialists | **LIVE** |
+| M2 | Orchestrator, transition policy, handoff/retry budgets, Writer-only final, degraded result | **LIVE as a library** |
 | M3 | Deterministic multi-agent timeline | **PLANNED** |
 | M4 | Offline golden tasks and behavioral scorecard | **PLANNED** |
 | M5 | Optional P2 HTTP research boundary | **PLANNED** |

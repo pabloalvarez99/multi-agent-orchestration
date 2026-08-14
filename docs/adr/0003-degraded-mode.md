@@ -1,6 +1,6 @@
 # ADR-0003: Make degraded completion explicit and evidence-preserving
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-13
 
 ## Context
@@ -11,22 +11,21 @@ that may be safe to return as a labelled partial.
 
 ## Decision
 
-Add a closed-set `degraded` terminal status. It requires:
+Add a closed-set `degraded` terminal status. The M2 result requires:
 
 - the failed participant or dependency;
 - a typed reason;
 - which intended checks or transformations did not run;
-- any evidence that was safely completed before failure; and
-- a timeline ending in `degraded` and `task_stopped`.
+- the handoff/retry accounting completed before failure.
 
-Degraded completion is allowed only when the returned material is evidence-preserving and
-cannot be mistaken for a fully reviewed final answer. No evidence means failure/refusal, not
-degraded success. Missing Critic approval cannot be silently accepted, and a Writer failure
-cannot promote an intermediate memo to final text.
+It cannot be mistaken for a fully reviewed final answer. Missing Critic approval is not
+silently accepted, and a Writer failure cannot promote an intermediate memo to final text.
+Preserving partial evidence as a structured field and recording a terminal timeline event are
+follow-up milestones, not properties of the M2 contract.
 
 ## Consequences
 
-- Callers can distinguish partial value from normal success and hard failure.
+- Callers can distinguish an explained degraded result from normal success and budget expiry.
 - Failure demos remain inspectable instead of becoming exception screenshots.
 - Terminal policy is more complex and needs golden cases for each specialist failure.
 - Availability does not outrank the Writer-only and evidence-approval invariants.

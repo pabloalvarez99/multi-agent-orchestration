@@ -1,6 +1,6 @@
 # ADR-0001: Use narrow specialists behind an orchestrator
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-13
 
 ## Context
