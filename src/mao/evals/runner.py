@@ -4,9 +4,28 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+from typing import Literal
 
-from mao.evals.dataset import DEFAULT_DATASET, load_dataset
-from mao.evals.models import EvalMetrics, EvalReport, GoldenResult, GoldenTask
+from mao.agents import (
+    FakeResearchAgent,
+    ResearchCapabilityMissing,
+    ResearchChoice,
+    build_research_agent,
+)
+from mao.evals.dataset import (
+    DEFAULT_BOUNDARY_DATASET,
+    DEFAULT_DATASET,
+    load_boundary_dataset,
+    load_dataset,
+)
+from mao.evals.models import (
+    BoundaryGolden,
+    BoundaryResult,
+    EvalMetrics,
+    EvalReport,
+    GoldenResult,
+    GoldenTask,
+)
 from mao.models import AgentName, TaskBudget
 from mao.orchestrator import run_task
 
@@ -36,7 +55,26 @@ def _equal(failures: list[str], field: str, actual: object, expected: object) ->
         failures.append(f"{field}={actual!r}, expected {expected!r}")
 
 
-def evaluate(path: Path = DEFAULT_DATASET) -> EvalReport:
+def evaluate_boundary_case(golden: BoundaryGolden) -> BoundaryResult:
+    """Exercise configuration only; construction cannot make a network call."""
+    outcome: Literal["fake_agent", "capability_missing", "unexpected"] = "unexpected"
+    try:
+        agent = build_research_agent(ResearchChoice(golden.research), base_url="")
+        if isinstance(agent, FakeResearchAgent):
+            outcome = "fake_agent"
+    except ResearchCapabilityMissing:
+        outcome = "capability_missing"
+    return BoundaryResult(
+        id=golden.id,
+        outcome=outcome,
+        passed=outcome == golden.expected_outcome,
+    )
+
+
+def evaluate(
+    path: Path = DEFAULT_DATASET,
+    boundary_path: Path = DEFAULT_BOUNDARY_DATASET,
+) -> EvalReport:
     """Run every golden and aggregate handoff, retry, Writer, and status metrics."""
     results = tuple(evaluate_case(golden) for golden in load_dataset(path))
     total = len(results)
@@ -45,8 +83,12 @@ def evaluate(path: Path = DEFAULT_DATASET) -> EvalReport:
     retried = sum(result.research_retries > 0 for result in results)
     writer_finished = sum(result.writer_finished for result in results)
     counts = dict(sorted(Counter(result.status.value for result in results).items()))
+    boundary_results = tuple(
+        evaluate_boundary_case(golden) for golden in load_boundary_dataset(boundary_path)
+    )
     return EvalReport(
         dataset=path.as_posix(),
+        boundary_dataset=boundary_path.as_posix(),
         metrics=EvalMetrics(
             total_tasks=total,
             passed_tasks=passed,
@@ -57,7 +99,8 @@ def evaluate(path: Path = DEFAULT_DATASET) -> EvalReport:
             status_counts=counts,
         ),
         results=results,
+        boundary_results=boundary_results,
     )
 
 
-__all__ = ["evaluate", "evaluate_case"]
+__all__ = ["evaluate", "evaluate_boundary_case", "evaluate_case"]

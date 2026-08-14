@@ -1,0 +1,2 @@
+{"id":"fake-remains-default","research":"fake","url_configured":false,"expected_outcome":"fake_agent"}
+{"id":"http-needs-url","research":"http","url_configured":false,"expected_outcome":"capability_missing"}

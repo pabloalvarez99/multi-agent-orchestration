@@ -38,6 +38,28 @@ class GoldenResult(BaseModel):
     failures: tuple[str, ...] = ()
 
 
+class BoundaryGolden(BaseModel):
+    """One configuration-boundary expectation that never calls a dependency."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str = Field(min_length=1)
+    research: Literal["fake", "http"]
+    url_configured: Literal[False]
+    expected_outcome: Literal["fake_agent", "capability_missing"]
+
+
+class BoundaryResult(BaseModel):
+    """Observed specialist selection with explicit network accounting."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str
+    outcome: Literal["fake_agent", "capability_missing", "unexpected"]
+    network_calls: Literal[0] = 0
+    passed: bool
+
+
 class EvalMetrics(BaseModel):
     """Aggregate routing behavior across the committed scenarios."""
 
@@ -60,8 +82,10 @@ class EvalReport(BaseModel):
     provider: Literal["fake"] = "fake"
     billed_usd: float = Field(default=0.0, ge=0.0)
     dataset: str
+    boundary_dataset: str
     metrics: EvalMetrics
     results: tuple[GoldenResult, ...]
+    boundary_results: tuple[BoundaryResult, ...]
 
     @property
     def all_passed(self) -> bool:
@@ -69,4 +93,6 @@ class EvalReport(BaseModel):
         return (
             self.metrics.total_tasks > 0
             and self.metrics.passed_tasks == self.metrics.total_tasks
+            and bool(self.boundary_results)
+            and all(result.passed for result in self.boundary_results)
         )

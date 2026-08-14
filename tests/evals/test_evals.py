@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from mao.evals import evaluate, load_dataset
+from mao.evals import evaluate, load_boundary_dataset, load_dataset
 from mao.evals.run import main
 
 
@@ -26,6 +26,18 @@ def test_all_goldens_pass_for_zero_billed_cost() -> None:
     assert report.metrics.status_counts == {"budget_exhausted": 3, "done": 9}
     assert report.metrics.mean_handoffs == pytest.approx(40 / 12)
     assert report.metrics.writer_completion_rate == pytest.approx(9 / 12)
+    assert [result.outcome for result in report.boundary_results] == [
+        "fake_agent",
+        "capability_missing",
+    ]
+    assert all(result.network_calls == 0 for result in report.boundary_results)
+
+
+def test_boundary_dataset_covers_default_and_missing_capability() -> None:
+    cases = load_boundary_dataset()
+
+    assert len(cases) == 2
+    assert {case.research for case in cases} == {"fake", "http"}
 
 
 def test_eval_cli_prints_json_scorecard(capsys: pytest.CaptureFixture[str]) -> None:

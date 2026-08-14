@@ -8,9 +8,12 @@ from typing import Final
 
 from pydantic import ValidationError
 
-from mao.evals.models import GoldenTask
+from mao.evals.models import BoundaryGolden, GoldenTask
 
 DEFAULT_DATASET: Final = Path(__file__).resolve().parents[3] / "data" / "eval" / "tasks.jsonl"
+DEFAULT_BOUNDARY_DATASET: Final = (
+    Path(__file__).resolve().parents[3] / "data" / "eval" / "research_boundaries.jsonl"
+)
 REQUIRED_CATEGORIES: Final = frozenset({"happy_path", "critic_retry", "budget_stop"})
 
 
@@ -42,4 +45,32 @@ def load_dataset(path: Path = DEFAULT_DATASET) -> tuple[GoldenTask, ...]:
     return tuple(tasks)
 
 
-__all__ = ["DEFAULT_DATASET", "DatasetError", "load_dataset"]
+def load_boundary_dataset(
+    path: Path = DEFAULT_BOUNDARY_DATASET,
+) -> tuple[BoundaryGolden, ...]:
+    """Load the small, strict set of optional-research boundary cases."""
+    cases: list[BoundaryGolden] = []
+    seen: set[str] = set()
+    for line_number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not raw.strip():
+            continue
+        try:
+            golden = BoundaryGolden.model_validate(json.loads(raw))
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise DatasetError(f"{path}:{line_number}: invalid boundary case: {error}") from error
+        if golden.id in seen:
+            raise DatasetError(f"{path}:{line_number}: duplicate id {golden.id!r}")
+        seen.add(golden.id)
+        cases.append(golden)
+    if not cases:
+        raise DatasetError(f"{path}: expected at least one boundary case")
+    return tuple(cases)
+
+
+__all__ = [
+    "DEFAULT_BOUNDARY_DATASET",
+    "DEFAULT_DATASET",
+    "DatasetError",
+    "load_boundary_dataset",
+    "load_dataset",
+]
