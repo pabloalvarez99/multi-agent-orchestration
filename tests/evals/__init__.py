@@ -1,0 +1,1 @@
+"""Golden-task harness tests."""
